@@ -11,6 +11,8 @@ import TripPassengers from './components/pages/TripPassengers';
 import BookingRequest from './components/pages/BookingRequest';
 import MyBookings from './components/pages/MyBookings';
 import BookingHistory from './components/pages/BookingHistory';
+import AddVehicle from './components/pages/AddVehicle';
+import Contact from './components/pages/Contact';
 
 function App() {
   return (
@@ -21,12 +23,14 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/my-ride" element={<MyTrips />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/membership" element={<Membership />} />
         <Route path="/view-trip" element={<ViewTrip />} />
         <Route path="/trip-passengers" element={<TripPassengers />} />
         <Route path="/booking-request" element={<BookingRequest />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/booking-history" element={<BookingHistory />} />
+        <Route path="/add-vehicle" element={<AddVehicle />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

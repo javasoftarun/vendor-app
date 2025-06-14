@@ -1,125 +1,179 @@
 import React, { useState } from 'react';
+import { FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import BottomNav from '../common/BottomNav';
 
 const plans = [
   {
-    label: "$49.95 PER WEEK",
-    desc: "$5.00 for every 2 Metroplex Point of MEMBERSHIP Destinations per day"
+    id: 'basic',
+    name: 'Basic',
+    price: 0,
+    duration: 'Free',
+    features: [
+      'Standard rides',
+      'App support',
+    ],
+    highlight: false,
   },
   {
-    label: "$79.95 PER WEEK",
-    desc: "4 free Metroplex Point of Destinations per day & $5.00 for every 2 additional Metroplex Point of Destinations."
+    id: 'premium',
+    name: 'Premium',
+    price: 499,
+    duration: '/year',
+    features: [
+      'Unlimited rides',
+      'Exclusive discounts',
+      'Priority support',
+      'Early access to features',
+    ],
+    highlight: true,
   },
-  {
-    label: "$89.95 PER WEEK",
-    desc: "6 free Metroplex Point of Destinations per day & $5.00 for every 2 additional Metroplex Point of Destinations."
-  },
-  {
-    label: "$195.95 PER MONTH",
-    desc: "$5.00 for every 3 Metroplex Point of Destinations per day"
-  },
-  {
-    label: "$320.00 PER MONTH",
-    desc: "5 free Metroplex Point of Destinations per day & $5.00 for every additional Metroplex Point of Destinations."
-  },
-  {
-    label: "$360.00 PER MONTH",
-    desc: "7 free Metroplex Point of Destinations per day & $5.00 for every additional Metroplex Point of Destinations."
-  }
 ];
 
 export default function Membership() {
-  const [selected, setSelected] = useState(0);
+  const navigate = useNavigate();
+  const [selected, setSelected] = useState('premium');
 
   return (
-    <div style={{ background: '#f7f7f7', minHeight: '100vh', fontFamily: 'inherit' }}>
-      <div style={{
-        maxWidth: 430,
-        margin: '0 auto',
-        paddingBottom: 40
-      }}>
-        {/* Header */}
-        <div style={{
-          borderBottomLeftRadius: 32,
-          borderBottomRightRadius: 32,
-          padding: '32px 0 18px 0',
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#f5f6fa',
+        display: 'flex',
+        flexDirection: 'column',
+        fontFamily: 'inherit',
+        position: 'relative',
+        width: '100vw',
+        maxWidth: '100vw',
+        overflowX: 'hidden'
+      }}
+    >
+      <div
+        style={{
           display: 'flex',
           alignItems: 'center',
-          fontWeight: 700,
-          fontSize: 22,
-          color: '#232b35',
-          letterSpacing: 1,
-          marginBottom: 18,
-          justifyContent: 'center'
-        }}>
-          MEMBERSHIP
+          padding: '16px 18px 0 18px',
+          gap: 12
+        }}
+      >
+        <span
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: '#eee',
+            cursor: 'pointer',
+            marginRight: 0
+          }}
+          onClick={() => navigate(-1)}
+        >
+          <FaArrowLeft size={22} color="#232b35" />
+        </span>
+        <div style={{ flex: 1, fontWeight: 700, fontSize: 20, color: '#232b35' }}>
+          Membership
         </div>
+      </div>
 
-        {/* Plans */}
-        <div>
-          {plans.map((plan, idx) => (
+      {/* Main content */}
+      <div
+        style={{
+          flex: 1,
+          padding: '28px 0 110px 0',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflowY: 'auto'
+        }}
+      >
+        <div
+          style={{
+            width: '92%',
+            maxWidth: 360,
+            marginTop: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 18
+          }}
+        >
+          {plans.map(plan => (
             <div
-              key={idx}
+              key={plan.id}
+              onClick={() => setSelected(plan.id)}
               style={{
-                background: selected === idx ? '#eaf6ff' : '#fff',
+                background: '#fff',
+                border: selected === plan.id ? '2px solid #FFD600' : '1.5px solid #eee',
                 borderRadius: 16,
-                border: selected === idx ? '2px solid #7ecbff' : '1.5px solid #eee',
-                boxShadow: selected === idx ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 8px rgba(0,0,0,0.04)',
-                padding: '18px 18px 12px 18px',
-                marginBottom: 18,
-                display: 'flex',
-                alignItems: 'flex-start',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                padding: '20px 18px',
                 cursor: 'pointer',
-                position: 'relative'
+                position: 'relative',
+                transition: 'border 0.2s, box-shadow 0.2s, background 0.2s'
               }}
-              onClick={() => setSelected(idx)}
             >
-              <input
-                type="radio"
-                checked={selected === idx}
-                onChange={() => setSelected(idx)}
-                style={{
-                  accentColor: '#3bb4f2',
-                  width: 22,
-                  height: 22,
-                  marginRight: 16,
-                  marginTop: 3
-                }}
-              />
-              <div>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
                 <div style={{
                   fontWeight: 700,
-                  fontSize: 16,
+                  fontSize: 18,
                   color: '#232b35',
-                  marginBottom: 4
-                }}>{plan.label}</div>
-                <div style={{
-                  color: '#555',
-                  fontSize: 14,
-                  lineHeight: 1.5
-                }}>{plan.desc}</div>
+                  flex: 1
+                }}>
+                  {plan.name}
+                </div>
+                {selected === plan.id && (
+                  <FaCheckCircle color="#FFD600" size={22} />
+                )}
               </div>
+              <div style={{ fontWeight: 700, fontSize: 20, color: '#232b35', marginBottom: 4 }}>
+                {plan.price === 0 ? 'Free' : `₹${plan.price}`} <span style={{ fontWeight: 400, fontSize: 14, color: '#888' }}>{plan.duration}</span>
+              </div>
+              <ul style={{ color: '#555', fontSize: 15, paddingLeft: 18, margin: '8px 0 0 0' }}>
+                {plan.features.map(f => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Pay Now Button */}
+      {/* Pay Now Button - fixed above footer nav */}
+      <div
+        style={{
+          position: 'fixed',
+          left: 0,
+          bottom: 64,
+          width: '100vw',
+          display: 'flex',
+          justifyContent: 'center',
+          zIndex: 100,
+          background: 'transparent'
+        }}
+      >
         <button
+          disabled={selected === 'basic'}
           style={{
-            width: '100%',
-            background: '#FFD600',
+            width: '92%',
+            maxWidth: 360,
+            background: selected === 'basic' ? '#ccc' : '#FFD600',
+            color: selected === 'basic' ? '#fff' : '#232b35',
             border: 'none',
-            borderRadius: 24,
+            borderRadius: 12,
             padding: '16px 0',
-            fontWeight: 700,
+            fontWeight: 800,
             fontSize: 18,
-            color: '#232b35',
-            marginTop: 18,
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
+            cursor: selected === 'basic' ? 'not-allowed' : 'pointer',
+            boxShadow: '0 2px 8px rgba(255,214,0,0.10)',
+            marginBottom: 14,
+            letterSpacing: 0.2,
+            transition: 'background 0.2s'
           }}
         >
-          PAY NOW
+          {selected === 'basic' ? 'Already Active' : `Pay Now ₹499 / year`}
         </button>
       </div>
       {/* Bottom Navigation */}

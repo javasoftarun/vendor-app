@@ -12,6 +12,7 @@ export default function RegisterScreen() {
         password: '',
         confirmPassword: ''
     });
+    const [error, setError] = useState('');
     const navigate = useNavigate();
 
     const handleChange = e => {
@@ -20,13 +21,14 @@ export default function RegisterScreen() {
 
     const handleRegister = () => {
         if (!form.name || !form.phone || !form.address || !form.email || !form.password || !form.confirmPassword) {
-            alert('Please fill all required fields');
+            setError('Please fill all required fields');
             return;
         }
         if (form.password !== form.confirmPassword) {
-            alert('Passwords do not match');
+            setError('Passwords do not match');
             return;
         }
+        setError('');
         alert('Registration successful!');
         navigate('/login');
     };
@@ -50,6 +52,11 @@ export default function RegisterScreen() {
                     margin: '10px 0',
                     textAlign: 'center'
                 }}>REGISTER</div>
+                {error && (
+                    <div style={{ color: '#232b35', fontWeight: 600, marginBottom: 12, textAlign: 'center' }}>
+                        {error}
+                    </div>
+                )}
                 <div style={inputGroupStyle}>
                     <FaUser style={iconStyle} />
                     <input
