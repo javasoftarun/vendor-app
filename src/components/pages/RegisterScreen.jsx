@@ -1,185 +1,344 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaUser, FaPhoneAlt, FaMapMarkerAlt, FaBuilding, FaEnvelope, FaLock } from 'react-icons/fa';
+import ImageUpload from '../common/ImageUpload';
+import API_ENDPOINTS from '../config/apiConfig';
 
 export default function RegisterScreen() {
     const [form, setForm] = useState({
         name: '',
-        phone: '',
-        address: '',
-        company: '',
         email: '',
         password: '',
-        confirmPassword: ''
+        phone: '',
+        role: 'user',
+        gender: '',
+        dateOfBirth: '',
+        imageUrl: ''
     });
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [userId, setUserId] = useState('');
+    const [popup, setPopup] = useState({ open: false, success: false, message: '' });
 
     const handleChange = e => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const handleRegister = () => {
-        if (!form.name || !form.phone || !form.address || !form.email || !form.password || !form.confirmPassword) {
-            setError('Please fill all required fields');
-            return;
+    const handleImageUploaded = (url) => {
+        setForm(prev => ({
+            ...prev,
+            imageUrl: url
+        }));
+    };
+
+    const handleSubmit = async e => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const response = await fetch(API_ENDPOINTS.ADD_USER, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form)
+            });
+            const data = await response.json();
+            if (data && (data.responseCode === 0 || data.responseCode === 200) && data.responseMessage === 'success') {
+                setPopup({
+                    open: true,
+                    success: true,
+                    message: 'Registration successful!'
+                });
+                if (data.responseData && (data.responseData.id || typeof data.responseData === 'string')) {
+                    setUserId(data.responseData.id || data.responseData);
+                }
+            } else {
+                setPopup({
+                    open: true,
+                    success: false,
+                    message: data.responseMessage || 'Registration failed'
+                });
+            }
+        } catch (err) {
+            setPopup({
+                open: true,
+                success: false,
+                message: 'Registration failed'
+            });
         }
-        if (form.password !== form.confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-        setError('');
-        alert('Registration successful!');
-        navigate('/login');
+        setLoading(false);
     };
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{
-                flex: 1,
-                padding: 24,
-                maxWidth: 400,
-                margin: '0 auto',
-                width: '100%',
+        <div
+            style={{
+                minHeight: '100vh',
+                width: '100vw',
+                background: '#f7f8fa',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'center'
-            }}>
-                <div style={{
-                    fontSize: 28,
-                    fontWeight: 'bold',
-                    color: '#d32f2f',
-                    margin: '10px 0',
-                    textAlign: 'center'
-                }}>REGISTER</div>
-                {error && (
-                    <div style={{ color: '#232b35', fontWeight: 600, marginBottom: 12, textAlign: 'center' }}>
-                        {error}
-                    </div>
-                )}
-                <div style={inputGroupStyle}>
-                    <FaUser style={iconStyle} />
-                    <input
-                        style={inputStyle}
-                        name="name"
-                        placeholder="Full Name"
-                        value={form.name}
-                        onChange={handleChange}
-                    />
-                </div>
-                <div style={inputGroupStyle}>
-                    <FaPhoneAlt style={iconStyle} />
-                    <input
-                        style={inputStyle}
-                        name="phone"
-                        placeholder="Phone Number"
-                        value={form.phone}
-                        onChange={handleChange}
-                        type="tel"
-                        maxLength={10}
-                    />
-                </div>
-                <div style={inputGroupStyle}>
-                    <FaMapMarkerAlt style={iconStyle} />
-                    <input
-                        style={inputStyle}
-                        name="address"
-                        placeholder="Address"
-                        value={form.address}
-                        onChange={handleChange}
-                    />
-                </div>
-                <div style={inputGroupStyle}>
-                    <FaBuilding style={iconStyle} />
-                    <input
-                        style={inputStyle}
-                        name="company"
-                        placeholder="Company Name Optional"
-                        value={form.company}
-                        onChange={handleChange}
-                    />
-                </div>
-                <div style={inputGroupStyle}>
-                    <FaEnvelope style={iconStyle} />
-                    <input
-                        style={inputStyle}
-                        name="email"
-                        placeholder="Your Email"
-                        value={form.email}
-                        onChange={handleChange}
-                        type="email"
-                    />
-                </div>
-                <div style={inputGroupStyle}>
-                    <FaLock style={iconStyle} />
-                    <input
-                        style={inputStyle}
-                        name="password"
-                        placeholder="Password"
-                        value={form.password}
-                        onChange={handleChange}
-                        type="password"
-                    />
-                </div>
-                <div style={inputGroupStyle}>
-                    <FaLock style={iconStyle} />
-                    <input
-                        style={inputStyle}
-                        name="confirmPassword"
-                        placeholder="Password Again"
-                        value={form.confirmPassword}
-                        onChange={handleChange}
-                        type="password"
-                    />
-                </div>
-                <button
-                    style={{
-                        width: '100%',
-                        background: '#FFD600',
-                        border: 'none',
-                        borderRadius: 24,
-                        padding: 16,
-                        fontWeight: 'bold',
-                        fontSize: 16,
-                        color: '#d32f2f',
-                        margin: '20px 0 8px 0',
-                        cursor: 'pointer'
-                    }}
-                    onClick={handleRegister}
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                boxSizing: 'border-box'
+            }}
+        >
+            <form
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: '100%',
+                    maxWidth: 400,
+                    padding: '32px 18px 24px 18px',
+                    marginTop: 18
+                }}
+                onSubmit={handleSubmit}
+            >
+                <ImageUpload
+                    userId={form.email || form.phone || ''}
+                    onUploaded={handleImageUploaded}
+                    initialUrl={form.imageUrl}
+                />
+                <h2 style={{
+                    fontWeight: 700,
+                    fontSize: 22,
+                    color: '#232b35',
+                    marginBottom: 18,
+                    letterSpacing: 0.2
+                }}>
+                    Register
+                </h2>
+
+                <Input
+                    type="text"
+                    name="name"
+                    placeholder="Full Name"
+                    value={form.name}
+                    onChange={handleChange}
+                    required
+                />
+                <Input
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                />
+                <Input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                />
+                <Input
+                    type="text"
+                    name="phone"
+                    placeholder="Phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                    required
+                    maxLength={15}
+                    inputMode="tel"
+                />
+                {/* Role is hardcoded and hidden */}
+                <input type="hidden" name="role" value={form.role} />
+                <Select
+                    name="gender"
+                    value={form.gender}
+                    onChange={handleChange}
+                    required
                 >
-                    REGISTER NOW
+                    <option value="" disabled>
+                        Select Gender
+                    </option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </Select>
+                <Input
+                    type="date"
+                    name="dateOfBirth"
+                    placeholder="Date of Birth"
+                    value={form.dateOfBirth}
+                    onChange={handleChange}
+                    required
+                />
+                <button
+                    type="submit"
+                    style={{
+                        background: 'linear-gradient(90deg, #232b35 0%, #495057 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 9,
+                        padding: '13px 0',
+                        fontWeight: 700,
+                        fontSize: 16,
+                        cursor: 'pointer',
+                        width: '100%',
+                        marginTop: 10,
+                        boxShadow: '0 2px 12px rgba(44,62,80,0.10)',
+                        transition: 'background 0.2s'
+                    }}
+                    disabled={loading}
+                >
+                    {loading ? 'Registering...' : 'Register'}
                 </button>
-                <div style={{ textAlign: 'center', color: '#888', marginTop: 8 }}>
-                    Have An Account?{' '}
-                    <span style={{ color: '#d32f2f', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => navigate('/login')}>
-                        Login
+                <div style={{ marginTop: 18, width: '100%', textAlign: 'center' }}>
+                    <span style={{ fontSize: 15, color: '#495057' }}>
+                        Already have an account?{' '}
+                        <a
+                            href="/login"
+                            style={{
+                                color: '#FFD600',
+                                fontWeight: 700,
+                                textDecoration: 'none',
+                                marginLeft: 4
+                            }}
+                        >
+                            Login
+                        </a>
                     </span>
                 </div>
-            </div>
+            </form>
+            <ResultPopup
+                open={popup.open}
+                success={popup.success}
+                message={popup.message}
+                onClose={() => setPopup({ ...popup, open: false })}
+                onLogin={() => window.location.href = '/login'}
+            />
         </div>
     );
 }
 
-const inputGroupStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    border: '1px solid #FFD600',
-    borderRadius: 24,
-    padding: '0 16px',
-    marginBottom: 12,
-    background: '#fff'
-};
-const iconStyle = {
-    marginRight: 8,
-    color: '#FFD600',
-    fontSize: 18
-};
-const inputStyle = {
-    flex: 1,
-    padding: 16,
-    border: 'none',
-    outline: 'none',
-    fontSize: 16,
-    color: '#d32f2f',
-    background: 'transparent'
-};
+function Input(props) {
+    return (
+        <input
+            {...props}
+            style={{
+                width: '100%',
+                padding: '11px 13px',
+                borderRadius: 7,
+                border: '1.2px solid #e0e3e7',
+                fontSize: 15.5,
+                color: '#232b35',
+                background: '#fff',
+                outline: 'none',
+                fontWeight: 500,
+                marginBottom: 15,
+                boxSizing: 'border-box',
+                ...(props.style || {})
+            }}
+        />
+    );
+}
+
+function Select(props) {
+    return (
+        <select
+            {...props}
+            style={{
+                width: '100%',
+                padding: '11px 13px',
+                borderRadius: 7,
+                border: '1.2px solid #e0e3e7',
+                fontSize: 15.5,
+                color: props.value ? '#232b35' : '#888',
+                background: '#fff',
+                outline: 'none',
+                fontWeight: 500,
+                marginBottom: 15,
+                boxSizing: 'border-box',
+                ...(props.style || {})
+            }}
+        >
+            {props.children}
+        </select>
+    );
+}
+
+function ResultPopup({ open, success, message, onClose, onLogin }) {
+    if (!open) return null;
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.18)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+        }}>
+            <div style={{
+                background: '#fff',
+                borderRadius: 18,
+                boxShadow: '0 4px 32px rgba(44,62,80,0.13)',
+                padding: '32px 28px 24px 28px',
+                minWidth: 320,
+                maxWidth: '90vw',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+            }}>
+                <div style={{
+                    fontSize: 38,
+                    marginBottom: 12,
+                    color: success ? '#FFD600' : '#ff4d4f'
+                }}>
+                    {success ? '🎉' : '⚠️'}
+                </div>
+                <div style={{
+                    fontWeight: 700,
+                    fontSize: 20,
+                    color: success ? '#232b35' : '#ff4d4f',
+                    marginBottom: 10
+                }}>
+                    {success ? 'Registration Successful' : 'Registration Failed'}
+                </div>
+                <div style={{
+                    color: '#495057',
+                    fontSize: 15,
+                    marginBottom: 22
+                }}>
+                    {message}
+                </div>
+                {success ? (
+                    <button
+                        onClick={onLogin}
+                        style={{
+                            background: 'linear-gradient(90deg, #FFD600 60%, #FFEA70 100%)',
+                            color: '#232b35',
+                            border: 'none',
+                            borderRadius: 9,
+                            padding: '11px 0',
+                            fontWeight: 700,
+                            fontSize: 16,
+                            cursor: 'pointer',
+                            width: 180,
+                            marginBottom: 8,
+                            boxShadow: '0 2px 12px rgba(255,214,0,0.10)',
+                            transition: 'background 0.2s'
+                        }}
+                    >
+                        Go to Login
+                    </button>
+                ) : null}
+                <button
+                    onClick={onClose}
+                    style={{
+                        background: '#f7f8fa',
+                        color: '#232b35',
+                        border: '1.2px solid #e0e3e7',
+                        borderRadius: 9,
+                        padding: '10px 0',
+                        fontWeight: 500,
+                        fontSize: 15,
+                        cursor: 'pointer',
+                        width: 180
+                    }}
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    );
+}
