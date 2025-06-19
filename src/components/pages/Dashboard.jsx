@@ -59,6 +59,13 @@ const menuItems = [
 export default function Dashboard() {
   const navigate = useNavigate();
 
+  // get user from localStorage
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const imageUrl =
+    user.imageUrl && user.imageUrl !== "null"
+      ? user.imageUrl
+      : "https://randomuser.me/api/portraits/men/32.jpg"; // Default user image
+
   return (
     <div
       style={{
@@ -91,7 +98,7 @@ export default function Dashboard() {
           }}
         >
           <img
-            src="https://randomuser.me/api/portraits/men/32.jpg" // Replace with user's image URL
+            src={imageUrl}
             alt="User"
             style={{
               width: 36,

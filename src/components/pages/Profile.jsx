@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
-import { FaArrowLeft, FaPen, FaStar, FaPhoneAlt, FaMapMarkerAlt, FaEnvelope, FaBuilding } from 'react-icons/fa';
+import { FaArrowLeft, FaPen, FaStar, FaPhoneAlt, FaMapMarkerAlt, FaEnvelope, FaVenusMars, FaCalendar } from 'react-icons/fa';
 import BottomNav from '../common/BottomNav';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
   const [profile, setProfile] = useState({
-    name: 'Isaiah Francis',
-    phone: '+1 415-569-2700',
-    address: '777 brockton avenue, abington ma 2351',
-    email: 'isaiah123@gmail.com',
-    company: 'Techmates',
-    membership: 'Weekly',
-    rating: 4.7,
-    image: 'https://randomuser.me/api/portraits/men/32.jpg'
+    name: user.name || '',
+    phone: user.phone || 'Please add your phone number',
+    address: user.address || 'Please add your address',
+    email: user.email || 'Please add your email',
+    rating: user.rating || 4.7,
+    image: user.imageUrl && user.imageUrl !== "null" ? user.imageUrl : 'https://randomuser.me/api/portraits/men/32.jpg'
   });
 
   const [editField, setEditField] = useState(null);
@@ -167,25 +167,24 @@ export default function Profile() {
           onBlur={handleSave}
         />
         <ProfileField
-          label="Company Name"
-          icon={<FaBuilding style={{ color: '#FFD600', marginRight: 10 }} />}
-          name="company"
-          value={profile.company}
+          label="Gender"
+          icon={<FaVenusMars style={{ color: '#FFD600', marginRight: 10 }} />}
+          name="gender"
+          value={profile.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : "N/A"}
           editField={editField}
           onEdit={handleEdit}
           onChange={handleChange}
           onBlur={handleSave}
         />
         <ProfileField
-          label="Membership Plan"
-          icon={null}
-          name="membership"
-          value={profile.membership}
+          label="Date of Birth"
+          icon={<FaCalendar style={{ color: '#FFD600', marginRight: 10 }} />}
+          name="dateOfBirth"
+          value={profile.dateOfBirth || "N/A"}
           editField={editField}
           onEdit={handleEdit}
           onChange={handleChange}
           onBlur={handleSave}
-          editable={false}
         />
 
         <button

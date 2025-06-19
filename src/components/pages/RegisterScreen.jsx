@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import ImageUpload from '../common/ImageUpload';
 import API_ENDPOINTS from '../config/apiConfig';
 
 export default function RegisterScreen() {
@@ -14,18 +13,10 @@ export default function RegisterScreen() {
         imageUrl: ''
     });
     const [loading, setLoading] = useState(false);
-    const [userId, setUserId] = useState('');
     const [popup, setPopup] = useState({ open: false, success: false, message: '' });
 
     const handleChange = e => {
         setForm({ ...form, [e.target.name]: e.target.value });
-    };
-
-    const handleImageUploaded = (url) => {
-        setForm(prev => ({
-            ...prev,
-            imageUrl: url
-        }));
     };
 
     const handleSubmit = async e => {
@@ -44,9 +35,6 @@ export default function RegisterScreen() {
                     success: true,
                     message: 'Registration successful!'
                 });
-                if (data.responseData && (data.responseData.id || typeof data.responseData === 'string')) {
-                    setUserId(data.responseData.id || data.responseData);
-                }
             } else {
                 setPopup({
                     open: true,
@@ -64,140 +52,212 @@ export default function RegisterScreen() {
         setLoading(false);
     };
 
+    const handleLoginClick = () => {
+        window.location.href = '/login';
+    };
+
     return (
         <div
             style={{
                 minHeight: '100vh',
+                minWidth: '100vw',
+                height: '100vh',
                 width: '100vw',
-                background: '#f7f8fa',
+                background: '#fff',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'flex-start',
                 alignItems: 'center',
-                boxSizing: 'border-box'
+                justifyContent: 'center',
+                fontFamily: 'Montserrat, Arial, sans-serif',
+                overflowX: 'hidden', // Prevent horizontal scrolling
             }}
         >
-            <form
+            <div
                 style={{
+                    width: '100%',
+                    maxWidth: 480,
+                    minHeight: 420,
+                    background: '#fff',
+                    borderRadius: 16,
+                    boxShadow: '0 6px 32px rgba(44,62,80,0.10)',
+                    padding: '40px 32px 32px 32px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    width: '100%',
-                    maxWidth: 400,
-                    padding: '32px 18px 24px 18px',
-                    marginTop: 18
+                    position: 'relative',
+                    justifyContent: 'center',
+                    boxSizing: 'border-box',
+                    overflowX: 'hidden', // Prevent horizontal scrolling in content
                 }}
-                onSubmit={handleSubmit}
             >
-                <ImageUpload
-                    userId={form.email || form.phone || ''}
-                    onUploaded={handleImageUploaded}
-                    initialUrl={form.imageUrl}
-                />
-                <h2 style={{
-                    fontWeight: 700,
-                    fontSize: 22,
-                    color: '#232b35',
-                    marginBottom: 18,
-                    letterSpacing: 0.2
+                {/* Logo and App Name - exactly like LoginScreen */}
+                <div style={{
+                    marginBottom: 10,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center"
                 }}>
-                    Register
-                </h2>
-
-                <Input
-                    type="text"
-                    name="name"
-                    placeholder="Full Name"
-                    value={form.name}
-                    onChange={handleChange}
-                    required
-                />
-                <Input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                />
-                <Input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    value={form.password}
-                    onChange={handleChange}
-                    required
-                />
-                <Input
-                    type="text"
-                    name="phone"
-                    placeholder="Phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    required
-                    maxLength={15}
-                    inputMode="tel"
-                />
-                {/* Role is hardcoded and hidden */}
-                <input type="hidden" name="role" value={form.role} />
-                <Select
-                    name="gender"
-                    value={form.gender}
-                    onChange={handleChange}
-                    required
-                >
-                    <option value="" disabled>
-                        Select Gender
-                    </option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                </Select>
-                <Input
-                    type="date"
-                    name="dateOfBirth"
-                    placeholder="Date of Birth"
-                    value={form.dateOfBirth}
-                    onChange={handleChange}
-                    required
-                />
-                <button
-                    type="submit"
-                    style={{
-                        background: 'linear-gradient(90deg, #232b35 0%, #495057 100%)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 9,
-                        padding: '13px 0',
-                        fontWeight: 700,
-                        fontSize: 16,
-                        cursor: 'pointer',
-                        width: '100%',
-                        marginTop: 10,
-                        boxShadow: '0 2px 12px rgba(44,62,80,0.10)',
-                        transition: 'background 0.2s'
-                    }}
-                    disabled={loading}
-                >
-                    {loading ? 'Registering...' : 'Register'}
-                </button>
-                <div style={{ marginTop: 18, width: '100%', textAlign: 'center' }}>
-                    <span style={{ fontSize: 15, color: '#495057' }}>
-                        Already have an account?{' '}
-                        <a
-                            href="/login"
+                    <div style={{
+                        width: 72,
+                        height: 72,
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, #FFD600 0%, #232b35 100%)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 2px 16px #FFD60044"
+                    }}>
+                        <img
+                            src="https://img.icons8.com/color/96/taxi.png"
+                            alt="Bhada24 Logo"
                             style={{
-                                color: '#FFD600',
+                                width: 44,
+                                height: 44,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                                background: "#fff",
+                                border: "3px solid #fff",
+                                boxShadow: "0 1px 8px #FFD60033"
+                            }}
+                        />
+                    </div>
+                    <span style={{
+                        marginTop: 10,
+                        fontWeight: 800,
+                        fontSize: 26,
+                        color: "#232b35",
+                        letterSpacing: 1.2,
+                        fontFamily: "Montserrat, Arial, sans-serif"
+                    }}>
+                        Bhada24
+                    </span>
+                </div>
+                <h2 style={{
+                    textAlign: "center",
+                    fontWeight: 700,
+                    fontSize: 24,
+                    color: "#232b35",
+                    letterSpacing: 0.5
+                }}>Sign Up</h2>
+
+                <form
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        width: '100%',
+                        maxWidth: 400,
+                        padding: '0px 18px 24px 18px',
+                        marginTop: 18
+                    }}
+                    onSubmit={handleSubmit}
+                >
+                    <Input
+                        type="text"
+                        name="name"
+                        placeholder="Full Name"
+                        value={form.name}
+                        onChange={handleChange}
+                        required
+                    />
+                    <Input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        value={form.email}
+                        onChange={handleChange}
+                        required
+                    />
+                    <Input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        value={form.password}
+                        onChange={handleChange}
+                        required
+                    />
+                    <Input
+                        type="text"
+                        name="phone"
+                        placeholder="Phone"
+                        value={form.phone}
+                        onChange={handleChange}
+                        required
+                        maxLength={15}
+                        inputMode="tel"
+                    />
+                    {/* Role is hardcoded and hidden */}
+                    <input type="hidden" name="role" value={form.role} />
+                    <Select
+                        name="gender"
+                        value={form.gender}
+                        onChange={handleChange}
+                        required
+                    >
+                        <option value="" disabled>
+                            Select Gender
+                        </option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </Select>
+                    <Input
+                        type="date"
+                        name="dateOfBirth"
+                        placeholder="Date of Birth"
+                        value={form.dateOfBirth}
+                        onChange={handleChange}
+                        required
+                    />
+                    <button
+                        type="submit"
+                        style={{
+                            width: "100%",
+                            padding: "13px 0",
+                            borderRadius: 9,
+                            border: "none",
+                            background: "#232b35",
+                            color: "#FFD600",
+                            fontWeight: 700,
+                            fontSize: 17,
+                            cursor: "pointer",
+                            marginBottom: 8,
+                            letterSpacing: 1
+                        }}
+                        disabled={loading}
+                    >
+                        {loading ? "Registering..." : "Register"}
+                    </button>
+                </form>
+                {/* Login link */}
+                <div style={{
+                    width: "100%",
+                    marginTop: 18,
+                    textAlign: "center"
+                }}>
+                    <span style={{ color: "#232b35", fontSize: 15 }}>
+                        Already have an account?{" "}
+                        <button
+                            type="button"
+                            onClick={handleLoginClick}
+                            style={{
+                                background: "none",
+                                border: "none",
+                                color: "#FFD600",
                                 fontWeight: 700,
-                                textDecoration: 'none',
-                                marginLeft: 4
+                                textDecoration: "none",
+                                letterSpacing: 0.5,
+                                borderBottom: "2px solid #FFD600",
+                                paddingBottom: 2,
+                                cursor: "pointer",
+                                transition: "border 0.2s"
                             }}
                         >
                             Login
-                        </a>
+                        </button>
                     </span>
                 </div>
-            </form>
+            </div>
             <ResultPopup
                 open={popup.open}
                 success={popup.success}

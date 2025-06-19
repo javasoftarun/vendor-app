@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginScreen from './components/pages/LoginScreen';
 import RegisterScreen from './components/pages/RegisterScreen';
 import Dashboard from './components/pages/Dashboard'; 
-import MyTrips from './components/pages/MyTrips';
 import Profile from './components/pages/Profile'; 
 import Membership from './components/pages/Membership';
 import ViewTrip from './components/pages/ViewTrip';
@@ -13,6 +12,7 @@ import MyBookings from './components/pages/MyBookings';
 import BookingHistory from './components/pages/BookingHistory';
 import AddVehicle from './components/pages/AddVehicle';
 import Contact from './components/pages/Contact';
+import PrivateRoute from './components/config/PrivateRoute';
 
 function App() {
   return (
@@ -20,17 +20,16 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/register" element={<RegisterScreen />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/my-ride" element={<MyTrips />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/membership" element={<Membership />} />
-        <Route path="/view-trip" element={<ViewTrip />} />
-        <Route path="/trip-passengers" element={<TripPassengers />} />
-        <Route path="/booking-request" element={<BookingRequest />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
-        <Route path="/booking-history" element={<BookingHistory />} />
-        <Route path="/add-vehicle" element={<AddVehicle />} />
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+        <Route path="/contact" element={<PrivateRoute><Contact /></PrivateRoute>} />
+        <Route path="/membership" element={<PrivateRoute><Membership /></PrivateRoute>} />
+        <Route path="/view-trip" element={<PrivateRoute><ViewTrip /></PrivateRoute>} />
+        <Route path="/trip-passengers" element={<PrivateRoute><TripPassengers /></PrivateRoute>} />
+        <Route path="/booking-request" element={<PrivateRoute><BookingRequest /></PrivateRoute>} />
+        <Route path="/my-bookings" element={<PrivateRoute><MyBookings /></PrivateRoute>} />
+        <Route path="/booking-history" element={<PrivateRoute><BookingHistory /></PrivateRoute>} />
+        <Route path="/add-vehicle" element={<PrivateRoute><AddVehicle /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

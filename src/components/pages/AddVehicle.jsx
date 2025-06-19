@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { FaArrowLeft, FaCarSide } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../common/BottomNav';
@@ -37,6 +37,21 @@ export default function AddVehicle() {
   const [form, setForm] = useState(initialState);
   const [cabImage, setCabImage] = useState('');
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const name =
+      user.firstName
+        ? `${user.firstName} ${user.lastName || ""}`.trim()
+        : user.name || "";
+    const contact = user.phone || "";
+    setForm((prev) => ({
+      ...prev,
+      ownerName: name,
+      driverName: name,
+      driverContact: contact,
+    }));
+  }, []);
 
   const handleChange = (e, parent = null) => {
     const { name, value, type, checked } = e.target;
@@ -215,9 +230,9 @@ export default function AddVehicle() {
           >
             {/* Owner & Driver */}
             <SectionTitle>Owner & Driver</SectionTitle>
-            <Input label="Owner Name" name="ownerName" value={form.ownerName} onChange={handleChange} required />
-            <Input label="Driver Name" name="driverName" value={form.driverName} onChange={handleChange} required />
-            <Input label="Driver Contact" name="driverContact" value={form.driverContact} onChange={handleChange} required />
+            <Input label="Owner Name" name="ownerName" value={form.ownerName} onChange={handleChange} required readOnly />
+            <Input label="Driver Name" name="driverName" value={form.driverName} onChange={handleChange} required readOnly />
+            <Input label="Driver Contact" name="driverContact" value={form.driverContact} onChange={handleChange} required readOnly />
             <Input label="Driver License" name="driverLicense" value={form.driverLicense} onChange={handleChange} required />
             <Input label="Address" name="address" value={form.address} onChange={handleChange} required />
             <input type="hidden" name="latitude" value={form.latitude} />
