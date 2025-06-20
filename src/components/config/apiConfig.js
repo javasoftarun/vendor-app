@@ -2,6 +2,10 @@ const API_USER_BASE_URL = "https://userservice-c3lx.onrender.com/api";
 const API_CABANDBOOKING_BASE_URL = "https://carbookingservice.onrender.com/api";
 const API_COMMONSERVICE_BASE_URL = "https://commonservice.onrender.com/api";
 
+//const API_USER_BASE_URL = "http://localhost:8083/api";
+//const API_CABANDBOOKING_BASE_URL = "http://localhost:8082/api";
+//const API_COMMONSERVICE_BASE_URL = "http://localhost:8081/api";
+
 const API_ENDPOINTS = {
   // users api endpoints
   LOGIN_API: `${API_USER_BASE_URL}/users/login`,
@@ -20,12 +24,15 @@ const API_ENDPOINTS = {
   GET_ALL_CABS: `${API_CABANDBOOKING_BASE_URL}/cab/registration/get/all`,
   DELETE_CAB: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/registration/delete/${id}`,
   GET_CAB_BY_ID: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/registration/get/${id}`,
+  ADD_VEHICLE: `${API_CABANDBOOKING_BASE_URL}/cab/registration/register`,
   UPDATE_BOOKING: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/booking/update/${id}`,
   UPDATE_BOOKING_STATUS: `${API_CABANDBOOKING_BASE_URL}/cab/booking/update-booking-status`,
   SEARCH_AVAILABLE_CABS: `${API_CABANDBOOKING_BASE_URL}/cab/registration/search`,
   ADD_BOOKING: `${API_CABANDBOOKING_BASE_URL}/cab/booking/startbooking`,
   GET_BOOKINGS_BY_CAB_REG_ID: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/booking/get-by-cabregistrationid/${id}`,
   GET_BOOKINGS_BY_USER_ID: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/booking/get-by-userid/${id}`,
+  GET_PENDING_REQUESTS_BY_VENDOR_ID: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/booking/find-pending-request/${id}`,
+  GET_ALL_BOOKINGS_BY_VENDOR_ID: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/booking/find-all-bookings/${id}`,
 
   // Common service endpoints
   UPLOAD_BASE64_IMAGE: `${API_COMMONSERVICE_BASE_URL}/common/uploadBase64Image`,

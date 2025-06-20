@@ -408,7 +408,7 @@ export default function LoginScreen() {
             Don’t have an account?{" "}
             <button
               type="button"
-              onClick={handleSignUpClick} // your navigation logic here
+              onClick={handleSignUpClick} 
               style={{
                 background: "none",
                 border: "none",
