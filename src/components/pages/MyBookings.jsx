@@ -1,56 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaArrowLeft, FaMapMarkerAlt, FaClock, FaUsers, FaCalendarAlt, FaMoneyBillWave, FaCheckCircle } from 'react-icons/fa';
 import BottomNav from '../common/BottomNav';
 import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-
-// Mock data for upcoming bookings
-const bookings = [
-    {
-        id: 'BK-20250615-001',
-        passengerName: 'Alice Smith',
-        pickup: '789 Elm St, Springfield',
-        drop: '321 Pine Ave, Shelbyville',
-        date: '2025-06-13',
-        time: '09:00 AM',
-        passengers: 2,
-        status: 'upcoming'
-    },
-    {
-        id: 'BK-20250614-002',
-        passengerName: 'Bob Johnson',
-        pickup: '555 Maple Rd, Springfield',
-        drop: '888 Cedar Blvd, Shelbyville',
-        date: '2025-06-15',
-        time: '11:30 AM',
-        passengers: 1,
-        status: 'upcoming'
-    },
-    {
-        id: 'BK-20250613-003',
-        passengerName: 'Carol Lee',
-        pickup: '123 Main St, Springfield',
-        drop: '456 Oak Ave, Shelbyville',
-        date: '2025-06-14',
-        time: '10:30 AM',
-        passengers: 3,
-        status: 'upcoming'
-    }
-];
-
-// Sort bookings by date ascending
-const sortedBookings = bookings
-    .filter(b => b.status === 'upcoming')
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-function formatDate(dateStr) {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
-}
+import API_ENDPOINTS from '../config/apiConfig';
 
 export default function MyBookings() {
     const navigate = useNavigate();
+    const [bookings, setBookings] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState('');
     const [showCalendar, setShowCalendar] = useState(false);
     const [activeTripId, setActiveTripId] = useState(null);
@@ -59,7 +18,54 @@ export default function MyBookings() {
     const [tripEnded, setTripEnded] = useState(false);
     const [showPaymentPopup, setShowPaymentPopup] = useState(false);
     const [showStartTripPopup, setShowStartTripPopup] = useState(false);
-    const [pendingTripId, setPendingTripId] = useState(null); // New state for pending trip ID
+    const [pendingTripId, setPendingTripId] = useState(null);
+
+    // Fetch bookings by vendor id
+    useEffect(() => {
+        async function fetchBookings() {
+            setLoading(true);
+            try {
+                const user = JSON.parse(localStorage.getItem("user") || "{}");
+                const vendorId = user.userId || user.id || "";
+                const response = await fetch(API_ENDPOINTS.GET_ALL_BOOKINGS_BY_VENDOR_ID(vendorId));
+                const data = await response.json();
+                if (
+                    response.ok &&
+                    data.responseCode === 200 &&
+                    Array.isArray(data.responseData)
+                ) {
+                    // Flatten and map API fields to UI fields
+                    const bookingsArr = data.responseData.flat().map(b => ({
+                        id: b.bookingId,
+                        pickup: b.pickupLocation,
+                        drop: b.dropLocation,
+                        date: b.pickupDateTime ? b.pickupDateTime.split('T')[0] : '',
+                        time: b.pickupDateTime ? b.pickupDateTime.split('T')[1]?.slice(0,5) : '',
+                        passengers: b.cabCapacity,
+                        passengerName: b.driverName, // or use another field if needed
+                        ...b // keep all original fields if you need them
+                    }));
+                    setBookings(bookingsArr);
+                } else {
+                    setBookings([]);
+                }
+            } catch (err) {
+                setBookings([]);
+            }
+            setLoading(false);
+        }
+        fetchBookings();
+    }, []);
+
+    // Sort bookings by date ascending
+    const sortedBookings = bookings
+        .filter(b => b.bookingStatus === 'Accepted')
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+    }
 
     // Get unique dates from bookings for calendar
     const uniqueDates = Array.from(new Set(sortedBookings.map(b => b.date)));
@@ -75,15 +81,12 @@ export default function MyBookings() {
     // Calendar tile content/highlight
     function tileClassName({ date, view }) {
         if (view === 'month' && occupiedDates.includes(date.toDateString())) {
-            return 'occupied-date'; // This will be a background highlight, not a circle
+            return 'occupied-date';
         }
         return null;
     }
 
-    // Calendar tile click handler
     function handleCalendarChange(date) {
-        // Fix: Use date.toISOString().slice(0, 10) in UTC, but bookings are in local time.
-        // To ensure correct date, use date.getFullYear(), getMonth(), getDate()
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, '0');
         const dd = String(date.getDate()).padStart(2, '0');
@@ -107,8 +110,6 @@ export default function MyBookings() {
     function confirmCollectPayment(withReceipt) {
         setPaymentCollected(true);
         setShowPaymentPopup(false);
-        // You can handle the receipt logic here if needed
-        // Example: if (withReceipt) { ... }
     }
 
     function handleEndTrip() {
@@ -119,6 +120,56 @@ export default function MyBookings() {
             setPaymentCollected(false);
             setTripEnded(false);
         }, 2000);
+    }
+
+    if (loading) {
+        return (
+            <div style={{ background: '#f7f7f7', minHeight: '100vh', fontFamily: 'inherit', display: 'flex', flexDirection: 'column' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '16px 18px 0 18px',
+                        gap: 12
+                    }}
+                >
+                    <span
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            background: '#eee',
+                            cursor: 'pointer',
+                            marginRight: 0
+                        }}
+                        onClick={() => navigate(-1)}
+                    >
+                        <FaArrowLeft size={22} color="#232b35" />
+                    </span>
+                    <div style={{ flex: 1, fontWeight: 700, fontSize: 20, color: '#232b35' }}>
+                        My Bookings
+                    </div>
+                </div>
+                <div style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column'
+                }}>
+                    <img
+                        src="https://i.gifer.com/ZZ5H.gif"
+                        alt="Loading..."
+                        style={{ width: 80, height: 80, marginBottom: 18 }}
+                    />
+                    <div style={{ color: "#232b35", fontWeight: 600, fontSize: 18 }}>Loading bookings...</div>
+                </div>
+                <BottomNav />
+            </div>
+        );
     }
 
     return (

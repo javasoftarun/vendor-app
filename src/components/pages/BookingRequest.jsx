@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaArrowLeft, FaMapMarkerAlt } from 'react-icons/fa';
 import BottomNav from '../common/BottomNav';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,6 @@ export default function BookingRequest() {
   const [bookings, setBookings] = useState([]);
   const [action, setAction] = useState({});
   const [loading, setLoading] = useState(true);
-  const beepRef = useRef(null);
 
   // Get userId safely
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -30,7 +29,7 @@ export default function BookingRequest() {
           data.responseData.length > 0
         ) {
           const bookingsArr = data.responseData.flat();
-          setBookings(bookingsArr); // <-- Store all bookings
+          setBookings(bookingsArr);
         } else {
           setBookings([]);
         }
@@ -40,49 +39,36 @@ export default function BookingRequest() {
       setLoading(false);
     }
     fetchBooking();
-    // eslint-disable-next-line
   }, [API_ENDPOINT]);
 
-  // Play a "cool music" melody when booking is pending
-  useEffect(() => {
-    const isPending = bookings.length > 0 && bookings.some(booking => booking.bookingStatus === 'Pending' || booking.status === 'pending');
-    if (isPending) {
-      const coolMelody = () => {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const notes = [523.25, 659.25, 783.99, 659.25];
-        notes.forEach((freq, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.value = freq;
-          gain.gain.setValueAtTime(0.13, ctx.currentTime + i * 0.12);
-          gain.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.12 + 0.11);
-          osc.connect(gain).connect(ctx.destination);
-          osc.start(ctx.currentTime + i * 0.12);
-          osc.stop(ctx.currentTime + i * 0.12 + 0.11);
-          osc.onended = () => ctx.close();
-        });
-      };
-      beepRef.current = setInterval(coolMelody, 600);
-      coolMelody();
-    } else {
-      if (beepRef.current) clearInterval(beepRef.current);
+  // Accept/Reject handlers per booking
+  const handleBookingAction = async (bookingId, cabRegistrationId, bookingStatus, paymentStatus = "", role = "DRIVER") => {
+    try {
+      const response = await fetch(API_ENDPOINTS.UPDATE_BOOKING_STATUS, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId,
+          cabRegistrationId,
+          bookingStatus,
+          paymentStatus,
+          role
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.responseCode === 200) {
+        setAction(prev => ({ ...prev, [bookingId]: bookingStatus.toLowerCase() }));
+        setBookings(prev =>
+          prev.map(b =>
+            b.bookingId === bookingId ? { ...b, bookingStatus } : b
+          )
+        );
+      } else {
+        alert(data.responseMessage || "Failed to update booking status.");
+      }
+    } catch (err) {
+      alert("Network error. Please try again.");
     }
-    return () => {
-      if (beepRef.current) clearInterval(beepRef.current);
-    };
-  }, [bookings]);
-
-  const handleAccept = () => {
-    setAction('accepted');
-    // Update the status of all bookings to accepted
-    setBookings(prevBookings => prevBookings.map(booking => ({ ...booking, bookingStatus: 'Accepted' })));
-  };
-
-  const handleReject = () => {
-    setAction('rejected');
-    // Update the status of all bookings to rejected
-    setBookings(prevBookings => prevBookings.map(booking => ({ ...booking, bookingStatus: 'Rejected' })));
   };
 
   // Header and back button (always visible)
@@ -193,6 +179,7 @@ export default function BookingRequest() {
           const timeStr = pickupDate
             ? pickupDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true })
             : '';
+          const bookingAction = action[booking.bookingId];
 
           return (
             <div key={booking.bookingId || idx}
@@ -341,7 +328,8 @@ export default function BookingRequest() {
                   paddingBottom: 14
                 }}>
                   <button
-                    onClick={handleAccept}
+                    onClick={() => handleBookingAction(booking.bookingId, booking.cabRegistrationId, "Accepted", booking.paymentStatus)}
+                    disabled={bookingAction === 'accepted' || bookingAction === 'rejected'}
                     style={{
                       flex: 1,
                       background: '#232b35',
@@ -351,7 +339,8 @@ export default function BookingRequest() {
                       padding: '10px 0',
                       fontWeight: 700,
                       fontSize: 14,
-                      cursor: 'pointer',
+                      cursor: (bookingAction === 'accepted' || bookingAction === 'rejected') ? 'not-allowed' : 'pointer',
+                      opacity: (bookingAction === 'accepted' || bookingAction === 'rejected') ? 0.6 : 1,
                       letterSpacing: 0.3,
                       transition: 'background 0.2s'
                     }}
@@ -359,7 +348,8 @@ export default function BookingRequest() {
                     Accept
                   </button>
                   <button
-                    onClick={handleReject}
+                    onClick={() => handleBookingAction(booking.bookingId, booking.cabRegistrationId, "Rejected", booking.paymentStatus)}
+                    disabled={bookingAction === 'accepted' || bookingAction === 'rejected'}
                     style={{
                       flex: 1,
                       background: '#fff',
@@ -369,7 +359,8 @@ export default function BookingRequest() {
                       padding: '10px 0',
                       fontWeight: 700,
                       fontSize: 14,
-                      cursor: 'pointer',
+                      cursor: (bookingAction === 'accepted' || bookingAction === 'rejected') ? 'not-allowed' : 'pointer',
+                      opacity: (bookingAction === 'accepted' || bookingAction === 'rejected') ? 0.6 : 1,
                       letterSpacing: 0.3,
                       transition: 'background 0.2s'
                     }}
@@ -380,12 +371,12 @@ export default function BookingRequest() {
               )}
 
               {/* Status Message */}
-              {action === 'accepted' && (
+              {bookingAction === 'accepted' && (
                 <div style={{ color: '#00b894', fontWeight: 700, marginTop: 14, textAlign: 'center', fontSize: 14 }}>
                   Booking Accepted
                 </div>
               )}
-              {action === 'rejected' && (
+              {bookingAction === 'rejected' && (
                 <div style={{ color: '#d32f2f', fontWeight: 700, marginTop: 14, textAlign: 'center', fontSize: 14 }}>
                   Booking Rejected
                 </div>

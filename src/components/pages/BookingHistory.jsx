@@ -1,46 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaArrowLeft, FaMapMarkerAlt, FaClock, FaUsers, FaCheckCircle, FaTimesCircle, FaMoneyBillWave, FaCalendarAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import BottomNav from '../common/BottomNav';
-
-// Example mock data for completed and cancelled bookings
-const bookingHistory = [
-  {
-    id: 'BK-20250610-001',
-    passengerName: 'Alice Smith',
-    pickup: '789 Elm St, Springfield',
-    drop: '321 Pine Ave, Shelbyville',
-    date: '2025-06-10',
-    time: '09:00 AM',
-    passengers: 2,
-    status: 'completed',
-    amount: 1200,
-    paymentMode: 'Cash'
-  },
-  {
-    id: 'BK-20250609-002',
-    passengerName: 'Bob Johnson',
-    pickup: '555 Maple Rd, Springfield',
-    drop: '888 Cedar Blvd, Shelbyville',
-    date: '2025-06-09',
-    time: '11:30 AM',
-    passengers: 1,
-    status: 'cancelled',
-    amount: 0,
-    paymentMode: null
-  }
-];
+import API_ENDPOINTS from '../config/apiConfig';
 
 export default function BookingHistory() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('completed');
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch all bookings by vendor id
+  useEffect(() => {
+    async function fetchBookings() {
+      setLoading(true);
+      try {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const vendorId = user.userId || user.id || "";
+        const response = await fetch(API_ENDPOINTS.GET_ALL_BOOKINGS_BY_VENDOR_ID(vendorId));
+        const data = await response.json();
+        if (
+          response.ok &&
+          data.responseCode === 200 &&
+          Array.isArray(data.responseData)
+        ) {
+          // Flatten and map API fields to UI fields
+          const bookingsArr = data.responseData.flat().map(b => ({
+            id: b.bookingId,
+            passengerName: b.driverName || '', // or use customer name if available
+            pickup: b.pickupLocation,
+            drop: b.dropLocation,
+            date: b.pickupDateTime ? b.pickupDateTime.split('T')[0] : '',
+            time: b.pickupDateTime ? b.pickupDateTime.split('T')[1]?.slice(0,5) : '',
+            passengers: b.cabCapacity,
+            status: b.bookingStatus === 'Completed' ? 'completed'
+                  : b.bookingStatus === 'Rejected' ? 'cancelled'
+                  : '', // Only completed/cancelled
+            amount: b.fare,
+            paymentMode: b.paymentStatus === 'paid' ? 'Paid' : b.paymentStatus,
+            ...b
+          })).filter(b => b.status); // Only keep completed/cancelled
+          setBookings(bookingsArr);
+        } else {
+          setBookings([]);
+        }
+      } catch (err) {
+        setBookings([]);
+      }
+      setLoading(false);
+    }
+    fetchBookings();
+  }, []);
 
   // Unique booking dates for highlight
-  const uniqueDates = Array.from(new Set(bookingHistory.map(b => b.date)));
+  const uniqueDates = Array.from(new Set(bookings.map(b => b.date)));
   const occupiedDates = uniqueDates.map(d => new Date(d).toDateString());
 
   // Calendar tile highlight
@@ -53,8 +70,8 @@ export default function BookingHistory() {
 
   // Filter bookings by selected date if any
   const filteredBookings = selectedDate
-    ? bookingHistory.filter(b => b.date === selectedDate && b.status === tab)
-    : bookingHistory.filter(b => b.status === tab);
+    ? bookings.filter(b => b.date === selectedDate && b.status === tab)
+    : bookings.filter(b => b.status === tab);
 
   // Format date for display
   function formatDate(dateStr) {
@@ -192,7 +209,7 @@ export default function BookingHistory() {
         background: '#fff',
         borderRadius: 18,
         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        maxWidth: 430, // Match booking card width
+        maxWidth: 430,
         width: '100%',
         overflow: 'hidden'
       }}>
@@ -242,12 +259,15 @@ export default function BookingHistory() {
         margin: '0 auto',
         padding: '0 0 40px 0'
       }}>
-        {filteredBookings.length === 0 && (
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>
+            Loading booking history...
+          </div>
+        ) : filteredBookings.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>
             No {tab} bookings.
           </div>
-        )}
-        {filteredBookings.map((booking) => (
+        ) : filteredBookings.map((booking) => (
           <div
             key={booking.id}
             style={{
@@ -378,7 +398,7 @@ export default function BookingHistory() {
         `}
       </style>
 
-      <BottomNav /> {/* Add this just before the closing div */}
+      <BottomNav />
     </div>
   );
 }

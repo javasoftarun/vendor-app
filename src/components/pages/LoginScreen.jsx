@@ -43,6 +43,9 @@ export default function LoginScreen() {
     setTimeout(() => {
       if (otp === "123456") {
         setMessage("Login successful!");
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 800);
       } else {
         setMessage("Invalid OTP. Please try again.");
       }
@@ -63,6 +66,7 @@ export default function LoginScreen() {
         body: JSON.stringify({
           username: username,
           password: encryptedPassword,
+          role: "DRIVER",
         }),
       });
       const data = await response.json();
@@ -210,7 +214,7 @@ export default function LoginScreen() {
           </button>
           <button
             type="button"
-            onClick={() => { setMode("password"); setMessage(""); }}
+            onClick={() => { setMode("password"); setMessage(""); setOtpSent(false); }}
             style={{
               flex: 1,
               padding: "12px 0",
@@ -355,18 +359,23 @@ export default function LoginScreen() {
             </div>
             {/* Forgot password link */}
             <div style={{ width: "100%", textAlign: "right", margin: "4px 0 12px 0" }}>
-              <a
-                href="#"
+              <button
+                type="button"
+                onClick={() => {/* your forgot password logic here */}}
                 style={{
+                  background: "none",
+                  border: "none",
                   color: "#232b35",
                   fontSize: 14,
                   textDecoration: "underline",
                   fontWeight: 500,
-                  letterSpacing: 0.2
+                  letterSpacing: 0.2,
+                  cursor: "pointer",
+                  padding: 0
                 }}
               >
                 Forgot password?
-              </a>
+              </button>
             </div>
             <button type="submit" style={{
               width: "100%",
@@ -408,7 +417,7 @@ export default function LoginScreen() {
             Don’t have an account?{" "}
             <button
               type="button"
-              onClick={handleSignUpClick} 
+              onClick={handleSignUpClick}
               style={{
                 background: "none",
                 border: "none",

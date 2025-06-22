@@ -16,23 +16,23 @@ import PrivateRoute from './components/config/PrivateRoute';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginScreen />} />
-        <Route path="/register" element={<RegisterScreen />} />
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-        <Route path="/contact" element={<PrivateRoute><Contact /></PrivateRoute>} />
-        <Route path="/membership" element={<PrivateRoute><Membership /></PrivateRoute>} />
-        <Route path="/view-trip" element={<PrivateRoute><ViewTrip /></PrivateRoute>} />
-        <Route path="/trip-passengers" element={<PrivateRoute><TripPassengers /></PrivateRoute>} />
-        <Route path="/booking-request" element={<PrivateRoute><BookingRequest /></PrivateRoute>} />
-        <Route path="/my-bookings" element={<PrivateRoute><MyBookings /></PrivateRoute>} />
-        <Route path="/booking-history" element={<PrivateRoute><BookingHistory /></PrivateRoute>} />
-        <Route path="/add-vehicle" element={<PrivateRoute><AddVehicle /></PrivateRoute>} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Router>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginScreen />} />
+          <Route path="/register" element={<RegisterScreen />} />
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+          <Route path="/contact" element={<PrivateRoute><Contact /></PrivateRoute>} />
+          <Route path="/membership" element={<PrivateRoute><Membership /></PrivateRoute>} />
+          <Route path="/view-trip" element={<PrivateRoute><ViewTrip /></PrivateRoute>} />
+          <Route path="/trip-passengers" element={<PrivateRoute><TripPassengers /></PrivateRoute>} />
+          <Route path="/booking-request" element={<PrivateRoute><BookingRequest /></PrivateRoute>} />
+          <Route path="/my-bookings" element={<PrivateRoute><MyBookings /></PrivateRoute>} />
+          <Route path="/booking-history" element={<PrivateRoute><BookingHistory /></PrivateRoute>} />
+          <Route path="/add-vehicle" element={<PrivateRoute><AddVehicle /></PrivateRoute>} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
   );
 }
 
