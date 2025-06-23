@@ -45,9 +45,9 @@ const menuItems = [
     path: '/membership'
   },
   {
-    label: 'Payment',
+    label: 'Payment History',
     icon: <FaCreditCard size={28} color="#d32f2f" />,
-    path: '/payment'
+    path: '/payment-history'
   },
   {
     label: 'Settings',

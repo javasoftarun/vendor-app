@@ -13,6 +13,9 @@ import BookingHistory from './components/pages/BookingHistory';
 import AddVehicle from './components/pages/AddVehicle';
 import Contact from './components/pages/Contact';
 import PrivateRoute from './components/config/PrivateRoute';
+import ManageVehicles from './components/pages/ManageVehicles';
+import EditVehicle from './components/pages/EditVehicle';
+import PaymentHistory from './components/pages/PaymentHistory';
 
 function App() {
   return (
@@ -30,6 +33,9 @@ function App() {
           <Route path="/my-bookings" element={<PrivateRoute><MyBookings /></PrivateRoute>} />
           <Route path="/booking-history" element={<PrivateRoute><BookingHistory /></PrivateRoute>} />
           <Route path="/add-vehicle" element={<PrivateRoute><AddVehicle /></PrivateRoute>} />
+          <Route path="/manage-vehicle" element={<PrivateRoute><ManageVehicles /></PrivateRoute>} />
+          <Route path="/edit-vehicle/:registrationId" element={<PrivateRoute><EditVehicle /></PrivateRoute>} />
+          <Route path="/payment-history" element={<PrivateRoute><PaymentHistory /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>

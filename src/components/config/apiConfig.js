@@ -23,8 +23,9 @@ const API_ENDPOINTS = {
   // cab and booking api endpoints
   GET_ALL_CABS: `${API_CABANDBOOKING_BASE_URL}/cab/registration/get/all`,
   DELETE_CAB: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/registration/delete/${id}`,
-  GET_CAB_BY_ID: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/registration/get/${id}`,
+  GET_CAB_BY_USER_ID: (userId) => `${API_CABANDBOOKING_BASE_URL}/cab/registration/get/by-user-id/${userId}`,
   ADD_VEHICLE: `${API_CABANDBOOKING_BASE_URL}/cab/registration/register`,
+  UPDATE_VEHICLE_BY_REG_ID: (regId) => `${API_CABANDBOOKING_BASE_URL}/cab/registration/update/${regId}`,
   UPDATE_BOOKING: (id) => `${API_CABANDBOOKING_BASE_URL}/cab/booking/update/${id}`,
   UPDATE_BOOKING_STATUS: `${API_CABANDBOOKING_BASE_URL}/cab/booking/update-booking-status`,
   SEARCH_AVAILABLE_CABS: `${API_CABANDBOOKING_BASE_URL}/cab/registration/search`,
