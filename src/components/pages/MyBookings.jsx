@@ -14,11 +14,16 @@ export default function MyBookings() {
     const [showCalendar, setShowCalendar] = useState(false);
     const [activeTripId, setActiveTripId] = useState(null);
     const [tripStarted, setTripStarted] = useState(false);
-    const [paymentCollected, setPaymentCollected] = useState(false);
+    const [setPaymentCollected] = useState(false);
     const [tripEnded, setTripEnded] = useState(false);
     const [showPaymentPopup, setShowPaymentPopup] = useState(false);
     const [showStartTripPopup, setShowStartTripPopup] = useState(false);
     const [pendingTripId, setPendingTripId] = useState(null);
+    const [currentPaymentAmount, setCurrentPaymentAmount] = useState(0);
+    const [endingTrip, setEndingTrip] = useState(false);
+
+    // User info cache: userId -> user object
+    const [userInfoMap, setUserInfoMap] = useState({});
 
     // Fetch bookings by vendor id
     useEffect(() => {
@@ -34,7 +39,6 @@ export default function MyBookings() {
                     data.responseCode === 200 &&
                     Array.isArray(data.responseData)
                 ) {
-                    // Flatten and map API fields to UI fields
                     const bookingsArr = data.responseData.flat().map(b => ({
                         id: b.bookingId,
                         pickup: b.pickupLocation,
@@ -42,7 +46,7 @@ export default function MyBookings() {
                         date: b.pickupDateTime ? b.pickupDateTime.split('T')[0] : '',
                         time: b.pickupDateTime ? b.pickupDateTime.split('T')[1]?.slice(0,5) : '',
                         passengers: b.cabCapacity,
-                        passengerName: b.driverName, // or use another field if needed
+                        userId: b.userId,
                         ...b // keep all original fields if you need them
                     }));
                     setBookings(bookingsArr);
@@ -57,9 +61,39 @@ export default function MyBookings() {
         fetchBookings();
     }, []);
 
+    // Fetch user info for all unique userIds in bookings
+    useEffect(() => {
+        async function fetchUserInfo(userId) {
+            // Replace with your actual user API endpoint
+            const response = await fetch(API_ENDPOINTS.GET_USER_BY_ID(userId));
+            const data = await response.json();
+            if (
+                response.ok &&
+                data.responseCode === 200 &&
+                Array.isArray(data.responseData) &&
+                data.responseData.length > 0
+            ) {
+                return data.responseData[0];
+            }
+            return null;
+        }
+
+        const uniqueUserIds = Array.from(new Set(bookings.map(b => b.userId)));
+        uniqueUserIds.forEach(userId => {
+            if (userId && !userInfoMap[userId]) {
+                fetchUserInfo(userId).then(userData => {
+                    if (userData) {
+                        setUserInfoMap(prev => ({ ...prev, [userId]: userData }));
+                    }
+                });
+            }
+        });
+        // eslint-disable-next-line
+    }, [bookings]);
+
     // Sort bookings by date ascending
     const sortedBookings = bookings
-        .filter(b => b.bookingStatus === 'Accepted')
+        .filter(b => b.bookingStatus === 'Accepted' || b.bookingStatus === 'Running')
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     function formatDate(dateStr) {
@@ -103,23 +137,150 @@ export default function MyBookings() {
         setShowStartTripPopup(true);
     }
 
-    function handleCollectPayment() {
+    // Function to call API and update booking status to "Running"
+    async function startTripAndUpdateStatus(booking) {
+        try {
+            const reqBody = {
+                bookingId: booking.id,
+                cabRegistrationId: booking.cabRegistrationId,
+                bookingStatus: "Running",
+                paymentStatus: booking.paymentStatus || "partial",
+                role: "VENDOR"
+            };
+            const response = await fetch(API_ENDPOINTS.UPDATE_BOOKING_STATUS, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqBody)
+            });
+            const data = await response.json();
+            if (response.ok && data.responseCode === 200) {
+                setBookings(prev =>
+                    prev.map(b =>
+                        b.id === booking.id ? { ...b, bookingStatus: 'Running' } : b
+                    )
+                );
+                setActiveTripId(booking.id);
+                setTripStarted(true);
+                setPaymentCollected(false);
+                setTripEnded(false);
+            } else {
+                alert(data.responseMessage || 'Failed to start trip. Please try again.');
+            }
+        } catch (err) {
+            alert('Failed to start trip. Please try again.');
+        }
+        setShowStartTripPopup(false);
+        setPendingTripId(null);
+    }
+
+    function handleCollectPayment(amount) {
+        setCurrentPaymentAmount(amount || 0);
         setShowPaymentPopup(true);
     }
 
-    function confirmCollectPayment(withReceipt) {
-        setPaymentCollected(true);
-        setShowPaymentPopup(false);
+    // Add this function inside your component (replace the old confirmCollectPayment if present)
+    function confirmCollectPayment() {
+        // Find the running/active booking
+        const booking = bookings.find(
+            b => (activeTripId ? b.id === activeTripId : b.bookingStatus === "Running")
+        );
+        if (!booking) {
+            setShowPaymentPopup(false);
+            return;
+        }
+
+        // Prepare request body for API
+        const reqBody = {
+            bookingId: booking.id,
+            cabRegistrationId: booking.cabRegistrationId,
+            bookingStatus: "Running",
+            paymentStatus: "full",
+            role: "VENDOR"
+        };
+
+        fetch(API_ENDPOINTS.UPDATE_BOOKING_STATUS, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reqBody)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.responseCode === 200) {
+                    setBookings(prev =>
+                        prev.map(b =>
+                            b.id === booking.id
+                                ? { ...b, paymentStatus: "full" }
+                                : b
+                        )
+                    );
+                    setPaymentCollected(true);
+                } else {
+                    alert(data.responseMessage || "Failed to update payment status.");
+                }
+            })
+            .catch(() => {
+                alert("Failed to update payment status.");
+            })
+            .finally(() => {
+                setShowPaymentPopup(false);
+            });
     }
 
-    function handleEndTrip() {
-        setTripEnded(true);
-        setTripStarted(false);
-        setActiveTripId(null);
-        setTimeout(() => {
-            setPaymentCollected(false);
-            setTripEnded(false);
-        }, 2000);
+    async function handleEndTrip() {
+        setEndingTrip(true); // Show loading state on button
+
+        const booking = bookings.find(
+            b => (activeTripId ? b.id === activeTripId : b.bookingStatus === "Running")
+        );
+        if (!booking) {
+            setTripEnded(true);
+            setTripStarted(false);
+            setActiveTripId(null);
+            setEndingTrip(false);
+            setTimeout(() => {
+                setPaymentCollected(false);
+                setTripEnded(false);
+            }, 2000);
+            return;
+        }
+
+        const reqBody = {
+            bookingId: booking.id,
+            cabRegistrationId: booking.cabRegistrationId,
+            bookingStatus: "Completed",
+            paymentStatus: "full",
+            role: "VENDOR"
+        };
+
+        try {
+            const response = await fetch(API_ENDPOINTS.UPDATE_BOOKING_STATUS, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqBody)
+            });
+            const data = await response.json();
+            if (response.ok && data.responseCode === 200) {
+                setBookings(prev =>
+                    prev.map(b =>
+                        b.id === booking.id
+                            ? { ...b, bookingStatus: "Completed" }
+                            : b
+                    )
+                );
+                setTripEnded(true);
+                setTripStarted(false);
+                setActiveTripId(null);
+                setTimeout(() => {
+                    setPaymentCollected(false);
+                    setTripEnded(false);
+                }, 2000);
+            } else {
+                alert(data.responseMessage || "Failed to end trip.");
+            }
+        } catch (err) {
+            alert("Failed to end trip.");
+        }
+        setEndingTrip(false); // Reset loading state
     }
 
     if (loading) {
@@ -306,7 +467,10 @@ export default function MyBookings() {
                     </div>
                 )}
                 {filteredBookings.map((booking) => {
+                    // Determine if this booking is active and running
                     const isActive = activeTripId === booking.id && tripStarted && !tripEnded;
+                    const isRunning = booking.bookingStatus === "Running";
+                    const isPaymentFull = booking.paymentStatus === "full";
 
                     // Check if today is the pickup date
                     const today = new Date();
@@ -315,6 +479,9 @@ export default function MyBookings() {
                     const dd = String(today.getDate()).padStart(2, '0');
                     const todayStr = `${yyyy}-${mm}-${dd}`;
                     const isTodayPickup = booking.date === todayStr;
+
+                    // Get user info for this booking
+                    const userInfo = userInfoMap[booking.userId];
 
                     return (
                         <div
@@ -348,9 +515,137 @@ export default function MyBookings() {
                                     Trip In Progress <FaCheckCircle style={{ marginLeft: 6, color: '#00b894' }} />
                                 </div>
                             )}
-                            <div style={{ fontWeight: 700, fontSize: 16, color: '#232b35', marginBottom: 4 }}>
-                                {booking.passengerName}
+
+                            {/* User Info Card with Modern Call Button */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 16,
+                                    marginBottom: 12,
+                                    background: '#fff',
+                                    borderRadius: 14,
+                                    padding: '12px 16px',
+                                    boxShadow: '0 2px 8px rgba(44,62,80,0.06)',
+                                    border: '1.5px solid #FFD600',
+                                    minHeight: 64
+                                }}
+                            >
+                                {/* User Avatar */}
+                                <div style={{
+                                    width: 54,
+                                    height: 54,
+                                    borderRadius: '50%',
+                                    overflow: 'hidden',
+                                    border: '2px solid #FFD600',
+                                    background: '#FFFBE6',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 800,
+                                    fontSize: 22,
+                                    color: '#232b35',
+                                    flexShrink: 0
+                                }}>
+                                    {userInfo?.imageUrl ? (
+                                        <img
+                                            src={userInfo.imageUrl}
+                                            alt="User"
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover',
+                                                borderRadius: '50%',
+                                                display: 'block'
+                                            }}
+                                            onError={e => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userInfo?.name || 'User')}&background=FFD600&color=232b35&rounded=true`; }}
+                                        />
+                                    ) : (
+                                        <span>
+                                            {userInfo?.name
+                                                ? userInfo.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                                                : 'U'}
+                                        </span>
+                                    )}
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{
+                                        fontWeight: 700,
+                                        fontSize: 18,
+                                        color: '#232b35',
+                                        marginBottom: 2,
+                                        letterSpacing: 0.2,
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis'
+                                    }}>
+                                        {userInfo
+                                            ? userInfo.name || userInfo.fullName || userInfo.phone || "User"
+                                            : "Loading user..."}
+                                    </div>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 10,
+                                        marginBottom: 2
+                                    }}>
+                                        <span style={{ color: '#e91e63', fontSize: 18, display: 'flex', alignItems: 'center' }}>
+                                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ marginRight: 2 }}>
+                                                <path d="M6.6 2.6A1.5 1.5 0 0 0 4.5 2.5C3.7 2.5 3 3.2 3 4c0 7.2 5.8 13 13 13 .8 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1l-2.2-2.2c-.3-.3-.7-.4-1.1-.4-.4 0-.8.2-1.1.4l-.7.7a10.9 10.9 0 0 1-4.6-4.6l.7-.7c.3-.3.4-.7.4-1.1 0-.4-.2-.8-.4-1.1L6.6 2.6z" fill="#e91e63"/>
+                                            </svg>
+                                            {userInfo?.phone || <span style={{ color: '#bbb', fontSize: 15 }}>No contact</span>}
+                                        </span>
+                                        {userInfo?.phone && (
+                                            <a
+                                                href={`tel:${userInfo.phone}`}
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: 6,
+                                                    background: 'linear-gradient(90deg, #2196f3 0%, #00b894 100%)',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    borderRadius: 22,
+                                                    padding: '6px 18px',
+                                                    fontWeight: 700,
+                                                    fontSize: 15,
+                                                    boxShadow: '0 2px 8px rgba(33,150,243,0.10)',
+                                                    textDecoration: 'none',
+                                                    transition: 'background 0.2s, box-shadow 0.2s',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Call User"
+                                            >
+                                                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ display: 'inline', verticalAlign: 'middle' }}>
+                                                    <path d="M6.6 2.6A1.5 1.5 0 0 0 4.5 2.5C3.7 2.5 3 3.2 3 4c0 7.2 5.8 13 13 13 .8 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1l-2.2-2.2c-.3-.3-.7-.4-1.1-.4-.4 0-.8.2-1.1.4l-.7.7a10.9 10.9 0 0 1-4.6-4.6l.7-.7c.3-.3.4-.7.4-1.1 0-.4-.2-.8-.4-1.1L6.6 2.6z" fill="#fff"/>
+                                                    <path d="M6.6 2.6A1.5 1.5 0 0 0 4.5 2.5C3.7 2.5 3 3.2 3 4c0 7.2 5.8 13 13 13 .8 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1l-2.2-2.2c-.3-.3-.7-.4-1.1-.4-.4 0-.8.2-1.1.4l-.7.7a10.9 10.9 0 0 1-4.6-4.6l.7-.7c.3-.3.4-.7.4-1.1 0-.4-.2-.8-.4-1.1L6.6 2.6z" fill="#fff" opacity="0.5"/>
+                                                </svg>
+                                                <span style={{ marginLeft: 4 }}>Call</span>
+                                            </a>
+                                        )}
+                                    </div>
+                                    {userInfo?.email && (
+                                        <div style={{
+                                            color: '#888',
+                                            fontSize: 14,
+                                            fontWeight: 400,
+                                            wordBreak: 'break-all',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 8
+                                        }}>
+                                            <span style={{ color: '#e91e63', fontSize: 16 }}>
+                                                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ marginRight: 2 }}>
+                                                    <path d="M2 5.5A2.5 2.5 0 0 1 4.5 3h11A2.5 2.5 0 0 1 18 5.5v9A2.5 2.5 0 0 1 15.5 17h-11A2.5 2.5 0 0 1 2 14.5v-9Zm1.6-.1L10 10.1l6.4-4.7A1.5 1.5 0 0 0 15.5 4h-11c-.2 0-.4 0-.6.1ZM17 6.7l-6.6 4.9a1 1 0 0 1-1.2 0L3 6.7V14.5c0 .8.7 1.5 1.5 1.5h11c.8 0 1.5-.7 1.5-1.5V6.7Z" fill="#e91e63"/>
+                                                </svg>
+                                            </span>
+                                            {userInfo.email}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* Booking ID */}
                             <div style={{ color: '#888', fontSize: 14, marginBottom: 8 }}>
                                 Booking ID: {booking.id}
                             </div>
@@ -375,7 +670,7 @@ export default function MyBookings() {
                                 </div>
                             </div>
                             {/* Trip Actions */}
-                            {!isActive && !tripEnded && (
+                            {!isActive && !tripEnded && booking.bookingStatus !== "Running" && (
                                 <button
                                     style={{
                                         marginTop: 18,
@@ -412,7 +707,9 @@ export default function MyBookings() {
                                     </span>
                                 </button>
                             )}
-                            {isActive && !paymentCollected && (
+
+                            {/* Show Collect Payment only if payment is NOT full */}
+                            {(isActive || isRunning) && !isPaymentFull && !tripEnded && (
                                 <button
                                     style={{
                                         marginTop: 18,
@@ -427,13 +724,14 @@ export default function MyBookings() {
                                         cursor: 'pointer',
                                         boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
                                     }}
-                                    onClick={handleCollectPayment}
+                                    onClick={() => handleCollectPayment(booking.balanceAmount || booking.amount || 0)}
                                 >
                                     <FaMoneyBillWave style={{ marginRight: 8 }} />
                                     Collect Payment
                                 </button>
                             )}
-                            {isActive && paymentCollected && !tripEnded && (
+                            {/* Show End Trip only if payment is full */}
+                            {(isActive || isRunning) && isPaymentFull && !tripEnded && (
                                 <button
                                     style={{
                                         marginTop: 18,
@@ -445,12 +743,13 @@ export default function MyBookings() {
                                         fontWeight: 700,
                                         fontSize: 15,
                                         color: '#FFD600',
-                                        cursor: 'pointer',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
+                                        cursor: endingTrip ? 'wait' : 'pointer',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                        opacity: endingTrip ? 0.7 : 1
                                     }}
                                     onClick={handleEndTrip}
                                 >
-                                    End Trip
+                                    {endingTrip ? 'Ending Trip...' : 'End Trip'}
                                 </button>
                             )}
                             {tripEnded && activeTripId === booking.id && (
@@ -502,10 +801,10 @@ export default function MyBookings() {
                     <div
                         style={{
                             background: '#fff',
-                            borderRadius: 18,
-                            padding: '32px 28px 24px 28px',
+                            borderRadius: 16,
+                            padding: '22px 18px 18px 18px', // smaller popup
                             boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-                            minWidth: 340,
+                            minWidth: 260,
                             maxWidth: '90vw',
                             textAlign: 'center',
                             position: 'relative',
@@ -515,22 +814,22 @@ export default function MyBookings() {
                     >
                         {/* Receipt Icon */}
                         <div style={{
-                            width: 60,
-                            height: 60,
+                            width: 44,
+                            height: 44,
                             borderRadius: '50%',
                             background: '#FFF9C4',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            margin: '0 auto 18px auto',
+                            margin: '0 auto 12px auto',
                             border: '2px solid #FFD600'
                         }}>
-                            <FaMoneyBillWave size={32} color="#FFD600" />
+                            <FaMoneyBillWave size={24} color="#FFD600" />
                         </div>
-                        <div style={{ fontWeight: 800, fontSize: 22, color: '#232b35', marginBottom: 8 }}>
+                        <div style={{ fontWeight: 800, fontSize: 18, color: '#232b35', marginBottom: 6 }}>
                             Payment Receipt
                         </div>
-                        <div style={{ color: '#888', fontSize: 15, marginBottom: 18 }}>
+                        <div style={{ color: '#888', fontSize: 14, marginBottom: 12 }}>
                             Please confirm you have received the payment from the customer.<br />
                             <span style={{ color: '#d32f2f', fontWeight: 600 }}>
                                 This action cannot be changed.
@@ -538,29 +837,29 @@ export default function MyBookings() {
                         </div>
                         <div style={{
                             background: '#f7f7f7',
-                            borderRadius: 12,
-                            padding: '16px 0',
-                            marginBottom: 18,
+                            borderRadius: 10,
+                            padding: '10px 0',
+                            marginBottom: 12,
                             border: '1px dashed #FFD600'
                         }}>
-                            <div style={{ fontWeight: 700, fontSize: 18, color: '#232b35', marginBottom: 4 }}>
-                                Amount Received
+                            <div style={{ fontWeight: 700, fontSize: 15, color: '#232b35', marginBottom: 2 }}>
+                                Balance Amount
                             </div>
-                            <div style={{ fontWeight: 800, fontSize: 24, color: '#00b894' }}>
-                                ₹ Amount
+                            <div style={{ fontWeight: 800, fontSize: 20, color: '#00b894' }}>
+                                ₹ {currentPaymentAmount}
                             </div>
                         </div>
-                        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginBottom: 10 }}>
+                        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 6 }}>
                             <button
                                 style={{
                                     flex: 1,
                                     background: '#FFD600',
                                     color: '#232b35',
                                     border: 'none',
-                                    borderRadius: 14,
-                                    padding: '12px 0',
+                                    borderRadius: 12,
+                                    padding: '10px 0',
                                     fontWeight: 700,
-                                    fontSize: 16,
+                                    fontSize: 15,
                                     cursor: 'pointer',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
                                 }}
@@ -574,10 +873,10 @@ export default function MyBookings() {
                                     background: '#fff',
                                     color: '#FFD600',
                                     border: '2px solid #FFD600',
-                                    borderRadius: 14,
-                                    padding: '12px 0',
+                                    borderRadius: 12,
+                                    padding: '10px 0',
                                     fontWeight: 700,
-                                    fontSize: 16,
+                                    fontSize: 15,
                                     cursor: 'pointer',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
                                 }}
@@ -589,11 +888,11 @@ export default function MyBookings() {
                         <button
                             style={{
                                 position: 'absolute',
-                                top: 10,
-                                right: 16,
+                                top: 8,
+                                right: 12,
                                 background: 'transparent',
                                 border: 'none',
-                                fontSize: 22,
+                                fontSize: 18,
                                 color: '#bbb',
                                 cursor: 'pointer'
                             }}
@@ -682,7 +981,8 @@ export default function MyBookings() {
                                 Once started, you cannot undo this action.
                             </span>
                         </div>
-                        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginBottom: 10 }}>
+                        
+                        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginTop: 18 }}>
                             <button
                                 style={{
                                     flex: 1,
@@ -696,14 +996,7 @@ export default function MyBookings() {
                                     cursor: 'pointer',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
                                 }}
-                                onClick={() => {
-                                    setActiveTripId(pendingTripId);
-                                    setTripStarted(true);
-                                    setPaymentCollected(false);
-                                    setTripEnded(false);
-                                    setShowStartTripPopup(false);
-                                    setPendingTripId(null);
-                                }}
+                                onClick={() => startTripAndUpdateStatus(filteredBookings.find(b => b.id === pendingTripId))}
                             >
                                 Yes, Start Trip
                             </button>
