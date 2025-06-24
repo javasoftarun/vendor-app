@@ -13,6 +13,14 @@ const bottomNav = [
 export default function BottomNav() {
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    // Optionally clear cookies if used for auth
+    // document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    navigate('/login');
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -30,7 +38,11 @@ export default function BottomNav() {
       {bottomNav.map((item) => (
         <div
           key={item.label}
-          onClick={() => navigate(item.path)}
+          onClick={
+            item.label === 'Logout'
+              ? handleLogout
+              : () => navigate(item.path)
+          }
           style={{
             display: 'flex',
             flexDirection: 'column',

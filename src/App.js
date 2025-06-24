@@ -16,6 +16,7 @@ import PrivateRoute from './components/config/PrivateRoute';
 import ManageVehicles from './components/pages/ManageVehicles';
 import EditVehicle from './components/pages/EditVehicle';
 import PaymentHistory from './components/pages/PaymentHistory';
+import Settings from './components/pages/Settings';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/manage-vehicle" element={<PrivateRoute><ManageVehicles /></PrivateRoute>} />
           <Route path="/edit-vehicle/:registrationId" element={<PrivateRoute><EditVehicle /></PrivateRoute>} />
           <Route path="/payment-history" element={<PrivateRoute><PaymentHistory /></PrivateRoute>} />
+          <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>

@@ -21,6 +21,8 @@ export default function MyBookings() {
     const [pendingTripId, setPendingTripId] = useState(null);
     const [currentPaymentAmount, setCurrentPaymentAmount] = useState(0);
     const [endingTrip, setEndingTrip] = useState(false);
+    const [showCancelPopup, setShowCancelPopup] = useState(false);
+    const [showDeductMsg, setShowDeductMsg] = useState(false);
 
     // User info cache: userId -> user object
     const [userInfoMap, setUserInfoMap] = useState({});
@@ -283,9 +285,47 @@ export default function MyBookings() {
         setEndingTrip(false); // Reset loading state
     }
 
+    // Add this function to handle booking cancellation
+    async function handleCancelBooking(booking) {
+        try {
+            const reqBody = {
+                bookingId: booking.id,
+                cabRegistrationId: booking.cabRegistrationId,
+                bookingStatus: "Cancelled",
+                paymentStatus: booking.paymentStatus || "partial",
+                role: "VENDOR"
+            };
+            const response = await fetch(API_ENDPOINTS.UPDATE_BOOKING_STATUS, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqBody)
+            });
+            const data = await response.json();
+            if (response.ok && data.responseCode === 200) {
+                setBookings(prev =>
+                    prev.map(b =>
+                        b.id === booking.id ? { ...b, bookingStatus: 'Cancelled' } : b
+                    )
+                );
+                setShowDeductMsg(true);
+                setTimeout(() => setShowDeductMsg(false), 3500);
+            } else {
+                alert(data.responseMessage || 'Failed to cancel booking. Please try again.');
+            }
+        } catch (err) {
+            alert('Failed to cancel booking. Please try again.');
+        }
+    }
+
     if (loading) {
         return (
-            <div style={{ background: '#f7f7f7', minHeight: '100vh', fontFamily: 'inherit', display: 'flex', flexDirection: 'column' }}>
+            <div style={{
+                background: '#f7f7f7',
+                minHeight: '100vh',
+                fontFamily: 'inherit',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
                 <div
                     style={{
                         display: 'flex',
@@ -321,12 +361,24 @@ export default function MyBookings() {
                     justifyContent: 'center',
                     flexDirection: 'column'
                 }}>
-                    <img
-                        src="https://i.gifer.com/ZZ5H.gif"
-                        alt="Loading..."
-                        style={{ width: 80, height: 80, marginBottom: 18 }}
-                    />
-                    <div style={{ color: "#232b35", fontWeight: 600, fontSize: 18 }}>Loading bookings...</div>
+                    <div style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        border: "3px solid #FFD600",
+                        borderTop: "3px solid #eee",
+                        animation: "spin 1s linear infinite"
+                    }} />
+                    <div style={{ color: "#232b35", fontWeight: 600, fontSize: 16, marginTop: 18 }}>
+                        Loading...
+                    </div>
+                    <style>
+                        {`
+        @keyframes spin {
+          100% { transform: rotate(360deg);}
+        }
+      `}
+                    </style>
                 </div>
                 <BottomNav />
             </div>
@@ -671,41 +723,70 @@ export default function MyBookings() {
                             </div>
                             {/* Trip Actions */}
                             {!isActive && !tripEnded && booking.bookingStatus !== "Running" && (
-                                <button
+                                <div
                                     style={{
+                                        display: 'flex',
                                         marginTop: 18,
-                                        width: '100%',
-                                        background: isTodayPickup
-                                            ? 'linear-gradient(90deg, #FFD600 0%, #FFF176 100%)'
-                                            : '#eee',
-                                        border: isTodayPickup ? '2px solid #FFD600' : 'none',
-                                        borderRadius: 18,
-                                        padding: '12px 0',
-                                        fontWeight: 800,
-                                        fontSize: 17,
-                                        color: isTodayPickup ? '#232b35' : '#aaa',
-                                        cursor: isTodayPickup ? 'pointer' : 'not-allowed',
-                                        boxShadow: isTodayPickup
-                                            ? '0 4px 16px rgba(255, 214, 0, 0.18)'
-                                            : '0 2px 8px rgba(0,0,0,0.07)',
-                                        letterSpacing: 1,
-                                        transition: 'all 0.2s'
+                                        justifyContent: 'space-between',
+                                        gap: 0,
                                     }}
-                                    onClick={() => isTodayPickup && handleStartTrip(booking.id)}
-                                    disabled={!isTodayPickup}
                                 >
-                                    <span style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: 8
-                                    }}>
+                                    {/* Show Cancel button only if NOT pickup date */}
+                                    {!isTodayPickup && (
+                                        <button
+                                            style={{
+                                                minWidth: 110,
+                                                background: '#fff',
+                                                border: '1.5px solid #d32f2f',
+                                                borderRadius: 8,
+                                                padding: '8px 0',
+                                                fontWeight: 600,
+                                                fontSize: 15,
+                                                color: '#d32f2f',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: 6,
+                                                boxShadow: '0 1px 4px rgba(44,62,80,0.06)',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            onClick={() => {
+                                                setPendingTripId(booking.id);
+                                                setShowCancelPopup(true);
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
+                                    <button
+                                        style={{
+                                            minWidth: 110,
+                                            background: isTodayPickup ? '#FFD600' : '#f7f7f7',
+                                            border: `1.5px solid ${isTodayPickup ? '#FFD600' : '#eee'}`,
+                                            borderRadius: 8,
+                                            padding: '8px 0',
+                                            fontWeight: 600,
+                                            fontSize: 15,
+                                            color: isTodayPickup ? '#232b35' : '#bbb',
+                                            cursor: isTodayPickup ? 'pointer' : 'not-allowed',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 6,
+                                            boxShadow: '0 1px 4px rgba(44,62,80,0.06)',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onClick={() => isTodayPickup && handleStartTrip(booking.id)}
+                                        disabled={!isTodayPickup}
+                                    >
                                         <FaCheckCircle style={{
                                             color: isTodayPickup ? '#00b894' : '#ccc',
-                                            fontSize: 20
+                                            fontSize: 16
                                         }} />
                                         Start Trip
-                                    </span>
-                                </button>
+                                    </button>
+                                </div>
                             )}
 
                             {/* Show Collect Payment only if payment is NOT full */}
@@ -1034,6 +1115,123 @@ export default function MyBookings() {
                         >
                             ×
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Booking Confirmation Popup */}
+            {showCancelPopup && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.18)',
+                    zIndex: 2000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <div
+                        style={{
+                            background: '#fff',
+                            borderRadius: 10,
+                            padding: '20px 18px 16px 18px',
+                            minWidth: 240,
+                            maxWidth: 340,
+                            width: '90%',
+                            textAlign: 'center',
+                            boxShadow: '0 4px 24px rgba(44,62,80,0.10)'
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 10, color: '#232b35' }}>
+                            Cancel Booking
+                        </div>
+                        <div style={{ color: '#555', fontSize: 15, marginBottom: 10 }}>
+                            Are you sure you want to cancel this booking?
+                        </div>
+                        <div style={{
+                            color: '#b71c1c',
+                            fontWeight: 600,
+                            fontSize: 14,
+                            marginBottom: 18,
+                            background: '#fafafa',
+                            borderRadius: 6,
+                            padding: '8px 6px',
+                            border: '1px solid #f0f0f0'
+                        }}>
+                            ₹200 will be deducted from your next booking as a cancellation charge.
+                        </div>
+                        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                            <button
+                                style={{
+                                    flex: 1,
+                                    background: '#d32f2f',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    padding: '9px 0',
+                                    fontWeight: 600,
+                                    fontSize: 15,
+                                    cursor: 'pointer'
+                                }}
+                                onClick={() => {
+                                    const bookingToCancel = filteredBookings.find(b => b.id === pendingTripId);
+                                    if (bookingToCancel) handleCancelBooking(bookingToCancel);
+                                    setShowCancelPopup(false);
+                                    setPendingTripId(null);
+                                }}
+                            >
+                                Yes, Cancel
+                            </button>
+                            <button
+                                style={{
+                                    flex: 1,
+                                    background: '#fff',
+                                    color: '#232b35',
+                                    border: '1.5px solid #bbb',
+                                    borderRadius: 6,
+                                    padding: '9px 0',
+                                    fontWeight: 600,
+                                    fontSize: 15,
+                                    cursor: 'pointer'
+                                }}
+                                onClick={() => {
+                                    setShowCancelPopup(false);
+                                    setPendingTripId(null);
+                                }}
+                            >
+                                No
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Deduction Message Popup */}
+            {showDeductMsg && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.18)',
+                    zIndex: 3000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <div style={{
+                        background: '#fff',
+                        borderRadius: 12,
+                        padding: '22px 28px',
+                        minWidth: 260,
+                        maxWidth: '90vw',
+                        textAlign: 'center',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                        border: '2px solid #FFD600',
+                        fontWeight: 700,
+                        fontSize: 16,
+                        color: '#d32f2f'
+                    }}>
+                        ₹200 will be deducted from your next booking as a cancellation charge.
                     </div>
                 </div>
             )}

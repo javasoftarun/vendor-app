@@ -236,17 +236,28 @@ export default function ManageVehicles() {
         maxWidth: 430, margin: "24px auto 0 auto", padding: "0 0 80px 0"
       }}>
         {loading ? (
-          <div style={{ textAlign: "center", color: "#888", marginTop: 60 }}>
-            <FaCarSide size={54} color="#FFD600" style={{ marginBottom: 18, animation: "spin 1.2s linear infinite" }} />
-            <div style={{ fontWeight: 600, fontSize: 16, color: "#232b35" }}>
+          <div style={{
+            minHeight: '40vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              border: "3px solid #FFD600",
+              borderTop: "3px solid #eee",
+              animation: "spin 1s linear infinite"
+            }} />
+            <div style={{ color: "#232b35", fontWeight: 600, fontSize: 16, marginTop: 18 }}>
               Loading vehicles...
             </div>
             <style>
               {`
                 @keyframes spin {
-                  0% { transform: rotate(-10deg);}
-                  50% { transform: rotate(10deg);}
-                  100% { transform: rotate(-10deg);}
+                  100% { transform: rotate(360deg);}
                 }
               `}
             </style>

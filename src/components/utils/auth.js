@@ -19,9 +19,18 @@ export function isTokenExpired(token) {
 }
 
 export function isAuthenticated() {
-  const token = getToken();
-  if (!token) return false;
-  return !isTokenExpired(token);
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (!user.token) return false;
+  try {
+    const payload = JSON.parse(atob(user.token.split('.')[1]));
+    // Check expiry (exp is in seconds)
+    if (payload.exp && Date.now() < payload.exp * 1000) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }
 
 export function logout() {

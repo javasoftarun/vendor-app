@@ -301,8 +301,31 @@ export default function BookingHistory() {
         padding: '0 0 40px 0'
       }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>
-            Loading booking history...
+          <div style={{
+            minHeight: '40vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              border: "3px solid #FFD600",
+              borderTop: "3px solid #eee",
+              animation: "spin 1s linear infinite"
+            }} />
+            <div style={{ color: "#232b35", fontWeight: 600, fontSize: 16, marginTop: 18 }}>
+              Loading booking history...
+            </div>
+            <style>
+              {`
+                @keyframes spin {
+                  100% { transform: rotate(360deg);}
+                }
+              `}
+            </style>
           </div>
         ) : filteredBookings.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>

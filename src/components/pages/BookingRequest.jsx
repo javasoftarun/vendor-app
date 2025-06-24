@@ -122,12 +122,24 @@ export default function BookingRequest() {
           justifyContent: 'center',
           flexDirection: 'column'
         }}>
-          <img
-            src="https://i.gifer.com/ZZ5H.gif"
-            alt="Loading..."
-            style={{ width: 80, height: 80, marginBottom: 18 }}
-          />
-          <div style={{ color: "#232b35", fontWeight: 600, fontSize: 18 }}>Loading booking request...</div>
+          <div style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "3px solid #FFD600",
+            borderTop: "3px solid #eee",
+            animation: "spin 1s linear infinite"
+          }} />
+          <div style={{ color: "#232b35", fontWeight: 600, fontSize: 16, marginTop: 18 }}>
+            Loading booking request...
+          </div>
+          <style>
+            {`
+              @keyframes spin {
+                100% { transform: rotate(360deg);}
+              }
+            `}
+          </style>
         </div>
         <BottomNav />
       </div>

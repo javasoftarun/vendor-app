@@ -160,36 +160,28 @@ export default function PaymentHistory() {
         }}
       >
         {loading ? (
-          <div
-            style={{
-              textAlign: "center",
-              color: "#888",
-              marginTop: 60,
-            }}
-          >
-            <FaReceipt
-              size={48}
-              color="#e0e3e7"
-              style={{
-                marginBottom: 18,
-                animation: "spin 1.2s linear infinite",
-              }}
-            />
-            <div
-              style={{
-                fontWeight: 600,
-                fontSize: 16,
-                color: "#232b35",
-              }}
-            >
-              Loading payments...
+          <div style={{
+            minHeight: '40vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              border: "3px solid #FFD600",
+              borderTop: "3px solid #eee",
+              animation: "spin 1s linear infinite"
+            }} />
+            <div style={{ color: "#232b35", fontWeight: 600, fontSize: 16, marginTop: 18 }}>
+              Loading payment history...
             </div>
             <style>
               {`
                 @keyframes spin {
-                  0% { transform: rotate(-10deg);}
-                  50% { transform: rotate(10deg);}
-                  100% { transform: rotate(-10deg);}
+                  100% { transform: rotate(360deg);}
                 }
               `}
             </style>

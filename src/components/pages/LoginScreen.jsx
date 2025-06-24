@@ -7,7 +7,8 @@ import { isAuthenticated } from "../utils/auth";
 
 export default function LoginScreen() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState("mobile");
+  // Change default mode to "password"
+  const [mode, setMode] = useState("password");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -76,6 +77,7 @@ export default function LoginScreen() {
         data.responseData &&
         data.responseData.length > 0
       ) {
+        // After successful login
         localStorage.setItem("user", JSON.stringify(data.responseData[0]));
         navigate("/dashboard");
       } else {
@@ -194,24 +196,7 @@ export default function LoginScreen() {
           marginBottom: 24,
           width: "100%"
         }}>
-          <button
-            type="button"
-            onClick={() => { setMode("mobile"); setMessage(""); setOtpSent(false); }}
-            style={{
-              flex: 1,
-              padding: "12px 0",
-              borderRadius: 9,
-              border: mode === "mobile" ? "2px solid #FFD600" : "1.2px solid #e0e3e7",
-              background: mode === "mobile" ? "#FFFBE6" : "#fff",
-              color: "#232b35",
-              fontWeight: 600,
-              fontSize: 16,
-              cursor: "pointer",
-              transition: "border 0.2s, background 0.2s"
-            }}
-          >
-            Mobile OTP
-          </button>
+          {/* Username & Password first */}
           <button
             type="button"
             onClick={() => { setMode("password"); setMessage(""); setOtpSent(false); }}
@@ -229,6 +214,24 @@ export default function LoginScreen() {
             }}
           >
             Username &amp; Password
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("mobile"); setMessage(""); setOtpSent(false); }}
+            style={{
+              flex: 1,
+              padding: "12px 0",
+              borderRadius: 9,
+              border: mode === "mobile" ? "2px solid #FFD600" : "1.2px solid #e0e3e7",
+              background: mode === "mobile" ? "#FFFBE6" : "#fff",
+              color: "#232b35",
+              fontWeight: 600,
+              fontSize: 16,
+              cursor: "pointer",
+              transition: "border 0.2s, background 0.2s"
+            }}
+          >
+            Mobile OTP
           </button>
         </div>
 
@@ -342,11 +345,16 @@ export default function LoginScreen() {
                   fontSize: 16,
                   flex: 1,
                 }}
+                autoComplete="new-password"
               />
+              {/* Only one custom icon, absolutely positioned */}
               <span
                 onClick={() => setShowPassword((prev) => !prev)}
                 style={{
-                  marginLeft: 10,
+                  position: "absolute",
+                  right: 14,
+                  top: "50%",
+                  transform: "translateY(-50%)",
                   cursor: "pointer",
                   color: "#bbb",
                   fontSize: 18,
