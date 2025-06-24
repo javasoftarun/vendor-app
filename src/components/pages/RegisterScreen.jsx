@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import API_ENDPOINTS from '../config/apiConfig';
+import sha1 from "sha1";
 
 export default function RegisterScreen() {
     const [form, setForm] = useState({
@@ -23,10 +24,12 @@ export default function RegisterScreen() {
         e.preventDefault();
         setLoading(true);
         try {
+            // Encrypt password using SHA-1 before sending
+            const encryptedForm = { ...form, password: sha1(form.password) };
             const response = await fetch(API_ENDPOINTS.ADD_USER, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form)
+                body: JSON.stringify(encryptedForm)
             });
             const data = await response.json();
             if (data && (data.responseCode === 0 || data.responseCode === 200) && data.responseMessage === 'success') {

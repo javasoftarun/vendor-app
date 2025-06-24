@@ -7,6 +7,17 @@ export default function Profile() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+  // Helper to get initials
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const [profile, setProfile] = useState({
     name: user.name || '',
     phone: user.phone || '',
@@ -15,7 +26,7 @@ export default function Profile() {
     gender: user.gender || '',
     dateOfBirth: user.dateOfBirth || '',
     rating: user.rating || 4.7,
-    image: user.imageUrl && user.imageUrl !== "null" ? user.imageUrl : 'https://randomuser.me/api/portraits/men/32.jpg'
+    image: user.imageUrl && user.imageUrl !== "null" ? user.imageUrl : ""
   });
 
   const [editMode, setEditMode] = useState(false);
@@ -55,7 +66,7 @@ export default function Profile() {
       gender: user.gender || '',
       dateOfBirth: user.dateOfBirth || '',
       rating: user.rating || 4.7,
-      image: user.imageUrl && user.imageUrl !== "null" ? user.imageUrl : 'https://randomuser.me/api/portraits/men/32.jpg'
+      image: user.imageUrl && user.imageUrl !== "null" ? user.imageUrl : ""
     });
     setEditMode(false);
     setErrorMsg("");
@@ -131,17 +142,33 @@ export default function Profile() {
           overflow: 'hidden',
           border: '3px solid #FFD600',
           marginBottom: 12,
-          background: '#f7f7f7'
+          background: '#f7f7f7',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 800,
+          fontSize: 34,
+          color: '#232b35'
         }}>
-          <img
-            src={profile.image}
-            alt="User"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover'
-            }}
-          />
+          {profile.image ? (
+            <img
+              src={profile.image}
+              alt="User"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+              onError={e => {
+                e.target.onerror = null;
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=FFD600&color=232b35&rounded=true`;
+              }}
+            />
+          ) : (
+            <span>
+              {getInitials(profile.name)}
+            </span>
+          )}
         </div>
         <div style={{
           fontWeight: 700,

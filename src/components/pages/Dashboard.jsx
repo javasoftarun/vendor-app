@@ -61,10 +61,19 @@ export default function Dashboard() {
 
   // get user from localStorage
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const imageUrl =
-    user.imageUrl && user.imageUrl !== "null"
-      ? user.imageUrl
-      : "https://randomuser.me/api/portraits/men/32.jpg"; // Default user image
+  const userName = user.name || "User";
+  const userImage = user.imageUrl && user.imageUrl !== "null" ? user.imageUrl : "";
+
+  // Helper to get initials
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <div
@@ -84,30 +93,44 @@ export default function Dashboard() {
           gap: 12
         }}
       >
-        <span
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            background: '#eee',
-            overflow: 'hidden',
-            marginRight: 0
-          }}
-        >
-          <img
-            src={imageUrl}
-            alt="User"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              objectFit: 'cover'
-            }}
-          />
-        </span>
+        {/* User Avatar - smaller size */}
+        <div style={{
+          width: 38,
+          height: 38,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          border: '1.5px solid #FFD600',
+          background: '#FFFBE6',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 800,
+          fontSize: 15,
+          color: '#232b35',
+          flexShrink: 0
+        }}>
+          {userImage ? (
+            <img
+              src={userImage}
+              alt="User"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '50%',
+                display: 'block'
+              }}
+              onError={e => {
+                e.target.onerror = null;
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=FFD600&color=232b35&rounded=true`;
+              }}
+            />
+          ) : (
+            <span>
+              {getInitials(userName)}
+            </span>
+          )}
+        </div>
         <input
           type="text"
           placeholder="Type or speak to search"
