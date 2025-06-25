@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import API_ENDPOINTS from '../config/apiConfig';
 import sha1 from "sha1";
+import { useNavigate } from 'react-router-dom';
 
 export default function RegisterScreen() {
+    const navigate = useNavigate();
     const [form, setForm] = useState({
         name: '',
         email: '',
