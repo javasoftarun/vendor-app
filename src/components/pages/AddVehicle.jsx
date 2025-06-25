@@ -18,7 +18,7 @@ export default function AddVehicle() {
     longitude: "",
     perKmRate: "",
     baseFare: "",
-    status: "",
+    status: "inactive",
     cab: {
       // Do NOT include cabId for new cab
       cabName: "",
@@ -118,7 +118,7 @@ export default function AddVehicle() {
       const response = await fetch(API_ENDPOINTS.ADD_VEHICLE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, userId }),
       });
       const data = await response.json();
 
