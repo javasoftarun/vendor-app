@@ -56,7 +56,7 @@ export default function RegisterScreen() {
     };
 
     const handleLoginClick = () => {
-        window.location.href = '/login';
+        navigate('/login');
     };
 
     return (

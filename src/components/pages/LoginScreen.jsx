@@ -105,7 +105,7 @@ export default function LoginScreen() {
   };
 
   const handleSignUpClick = () => {
-    window.location.href = '/register';
+    navigate('/register');
   };
 
   return (
@@ -369,7 +369,7 @@ export default function LoginScreen() {
             <div style={{ width: "100%", textAlign: "right", margin: "4px 0 12px 0" }}>
               <button
                 type="button"
-                onClick={() => {/* your forgot password logic here */}}
+                onClick={() => {/* your forgot password logic here */ }}
                 style={{
                   background: "none",
                   border: "none",
